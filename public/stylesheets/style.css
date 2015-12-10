@@ -1,8 +1,76 @@
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+    padding: 0;
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    color: #333333;
 }
 
 a {
-  color: #00B7FF;
+    text-decoration: none;
+    color: #333333;
 }
+ul {
+    list-style: none;
+}
+
+header {
+    top: 0;
+    height: 51px;
+    margin: 0;
+    min-height: 40px;
+    background-image: linear-gradient(to bottom, #EDFBFB, #9FD4E4);
+    background-repeat: repeat-x;
+    border: 1px solid #d4d4d4;
+    border-width: 0 0 1px;
+}
+
+#main {
+    padding: 50px;
+}
+
+div.container {
+    margin-right: auto;
+    margin-left: auto;
+    height: 100%;
+    width: 1600px;
+    padding: 5px;
+}
+
+#logo {
+    display: block;
+    float: left;
+    padding: 10px 20px 10px;
+    margin-left: -20px;
+    font-size: 20px;
+    font-weight: 200;
+    color: #777777;
+    text-shadow: 0 1px 0 #ffffff;
+}
+
+header .nav {
+    color: #777777;
+    position: relative;
+    left: 0;
+    display: block;
+    float: left;
+    margin: 0 10px 0 0;
+}
+
+header .nav li {
+    float: left;
+    margin-left: 5px;
+    margin-right: 5px;
+    padding: 10px 15px 10px;
+    color: #777777;
+    text-decoration: none;
+    text-shadow: 0 1px 0 #ffffff;
+}
+header .nav li a {
+    color: #736969;
+}
+header .nav li a:hover {
+    color: black;
+}
+

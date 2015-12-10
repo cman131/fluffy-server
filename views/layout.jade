@@ -4,4 +4,15 @@ html
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
   body
-    block content
+    header
+        div.container
+            a#logo(href='./') Fluffy-Server
+            ul.nav
+                li
+                    a.nav-link(href='./users') Users
+                li
+                    a.nav-link(href='./os') OS
+                li
+                    a.nav-link(href='./usage') Usage
+    div#main
+        block content
