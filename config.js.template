@@ -1,0 +1,2 @@
+exports.email = 'EMAIL ADDRESS';
+exports.epass = 'EMAIL PASSWORD';
