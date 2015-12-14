@@ -1,2 +1,3 @@
 exports.email = 'EMAIL ADDRESS';
 exports.epass = 'EMAIL PASSWORD';
+exports.url = 'DATABASE URL'
