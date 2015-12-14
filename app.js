@@ -8,7 +8,15 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
+var db = require('mongodb').MongoClient, assert = require('assert'); 
+
 var app = express();
+
+// Make our db accessible to our router
+app.use(function(req,res,next){
+  req.db = db;
+  next();
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
