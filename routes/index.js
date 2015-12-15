@@ -11,9 +11,13 @@ router.get('/registration', function(req, res, next) {
 });
 
 router.get('/manage', function(req, res, next) {
-  res.render('manage', {
-    title: 'Fluffy Santa',
-    participants: [{name: 'Conor'}, {name: 'Isaac'}, {name: 'Tom'}]
+  req.db.connect(config.url, function(err, db) {
+    db.collection('participants').find({}).toArray(function(err, docs) {
+      res.render('manage', {
+        title: 'Fluffy Santa',
+        participants: docs
+      });
+    });
   });
 });
 
@@ -55,19 +59,19 @@ function initiateEvent(MongoClient) {
   var server = email.server.connect({
     user: config.email,
     password: config.epass,
-    host: 'smtp.gmail.com', 
+    host: 'smtp.gmail.com',
     ssl: true
   });
-  var participants = [];
 
   MongoClient.connect(config.url, function(err, db) {
     db.collection('participants').find({}).toArray(function(err, docs) {
-      participants = docs;
+      var participants = docs;
       participants = shuffle(participants);
+      var emailSent = function(err, message) { console.log(err || message); };
       for(var i=0; i<participants.length; i++) {
         var recipient = i+1 >= participants.length ? participants[0] : participants[i+1];
         var santa = participants[i];
-        
+
         server.send({
           text: 'You will be getting a gift for: ' + recipient.name + '. Merry Christmas!'+
             (recipient.interests ? "\n\n They're interests include: \n"+recipient.interests : '')+
@@ -75,7 +79,7 @@ function initiateEvent(MongoClient) {
           from: 'Fluffy-Server <'+config.email+'>',
           to: santa.name+' <'+santa.email+'>',
           subject: 'Secret Santa'
-        }, function(err, message) { console.log(err || message); });
+        }, emailSent);
       }
     });
   });
