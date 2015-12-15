@@ -11,7 +11,13 @@ router.get('/registration', function(req, res, next) {
 });
 
 router.get('/manage', function(req, res, next) {
+  var config = require('../config');
   req.db.connect(config.url, function(err, db) {
+    if (err) {
+      console.log(err);
+      return;
+    }
+
     db.collection('participants').find({}).toArray(function(err, docs) {
       res.render('manage', {
         title: 'Fluffy Santa',
