@@ -1,14 +1,24 @@
-.form-style-1 {
-    max-width: 400px;
-    padding: 20px 12px 10px 20px;
-    font: 13px "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-}
-.form-style-1 h3 {
+h3 {
+  max-width: 400px;
   padding: 0;
   display: block;
   margin: 0 0 3px 0;
   border-bottom: 1px solid grey;
   font-weight: bold;
+}
+form {
+  margin-left: 20px;
+}
+.subtext {
+  margin-left: 40px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+.form-style-1 {
+    margin-top: 14px;
+    max-width: 400px;
+    padding: 0px 12px 10px 20px;
+    font: 13px "Lucida Sans Unicode", "Lucida Grande", sans-serif;
 }
 .form-style-1 li {
     padding: 0;
@@ -44,13 +54,13 @@
 .form-style-1 .field-long{
     width: 100%;
 }
-.form-style-1 input[type=submit], .form-style-1 input[type=button]{
+input[type=submit], input[type=button]{
     background: #4B99AD;
     padding: 8px 15px 8px 15px;
     border: none;
     color: #fff;
 }
-.form-style-1 input[type=submit]:hover, .form-style-1 input[type=button]:hover{
+input[type=submit]:hover, input[type=button]:hover{
     background: #4691A4;
     box-shadow:none;
     -moz-box-shadow:none;

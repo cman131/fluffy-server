@@ -136,7 +136,7 @@ router.post('/register', function(req, res) {
      '&email='+(req.body.email || '')+
      '&interests='+(req.body.interests || ''));
     return;
-  } else if(!validateEmail(req.body.email)) {
+  } else if(!validateEmail(req.body.email.trim())) {
     console.log('Not added. Invalid email address.');
     res.redirect('/registration?failure=true&message=Invalid email address.'+
      '&name='+(req.body.name || '')+
@@ -158,7 +158,7 @@ router.post('/register', function(req, res) {
   var MongoClient = req.db;
   var temp = {
     name: req.body.name,
-    email: req.body.email,
+    email: req.body.email.trim(),
     code: req.body.code.toUpperCase()
   };
   if(req.body.interests) {
