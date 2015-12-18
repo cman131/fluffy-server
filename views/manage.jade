@@ -1,6 +1,9 @@
 extends layout
 
 block content
+  if isaddition
+    div.banner.success
+      p Successfully added.
   h1 Managing Event: #{title}
   ul
     each val in participants

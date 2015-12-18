@@ -7,7 +7,14 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/registration', function(req, res, next) {
-  res.render('registration', { title: 'Fluffy Server - Register' });
+  var result = {title: 'Fluffy Server - Register'};
+  result.name = req.query.name || '';
+  result.email = req.query.email || '';
+  result.interests = req.query.interests || '';
+  if(req.query.failure) {
+    result.failure = true;
+  }
+  res.render('registration', result);
 });
 
 router.get('/manage', function(req, res, next) {
@@ -21,7 +28,8 @@ router.get('/manage', function(req, res, next) {
     db.collection('participants').find({}).toArray(function(err, docs) {
       res.render('manage', {
         title: 'Fluffy Santa',
-        participants: docs
+        participants: docs,
+        isaddition: (req.query.isaddition ? true : false)
       });
     });
   });
@@ -45,13 +53,24 @@ router.post('/register', function(req, res) {
     } else {
       console.log("successfully connected to the database");
       var dbcol = db.collection('participants');
-      if(dbcol.count({email: temp.email}) <= 0) {
-        var cursor = dbcol.insert(temp);
-      }
+      dbcol.count({email: temp.email}, function(err, count) {
+        if(err) {
+          console.log(err);
+        } else if(count <= 0) {
+          var cursor = dbcol.insert(temp);
+          console.log('Successfully added: ' + temp.name);
+        } else {
+          console.log('Not added. Already in db.');
+          db.close();
+          res.redirect('/registration?failure=true&name='+temp.name+
+           '&email='+temp.email+(temp.interests ? '&interests='+temp.interests : ''));
+          return;
+        }
+        db.close();
+        res.redirect('/manage?isaddition=true');
+      });
     }
-    db.close();
   });
-  res.send({ status: 200, body: temp });
 });
 
 router.post('/start', function(req, res) {

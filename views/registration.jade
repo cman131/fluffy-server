@@ -2,19 +2,22 @@ extends layout
 
 block content
   link(rel='stylesheet', href='/stylesheets/registration.css')
+  if failure
+    div.banner.failure
+      p Could not be added. May already be registered.
   h1= title
   form(action='/register', method='post')
     ul.form-style-1
       li
         label(for='name') Name
           span.required *
-        input.field-long(name='name', type='text', id='name')
+        input.field-long(name='name', type='text', id='name', value=name)
       li
         label(for='email') Email Address
           span.required *
-        input.field-long(name='email', type='text', id='email')
+        input.field-long(name='email', type='text', id='email', value=email)
       li
         label(for='interests') Interests
-        textarea.field-long.field-textarea(name='interests', type='textarea', id='interests', placeholder='List out some hobbies and things your interested in to help your santa :)')
+        textarea.field-long.field-textarea(name='interests', type='textarea', id='interests', placeholder='List out some hobbies and things your interested in to help your santa :)') #{interests}
       li.button
         input(type='submit', value='Register')

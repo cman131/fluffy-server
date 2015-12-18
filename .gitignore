@@ -28,3 +28,7 @@ node_modules
 
 # Configuration files
 config.js
+
+# Temp files
+*.swp
+*.*~
