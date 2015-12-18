@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  link(rel='stylesheet', href='/stylesheets/registration.css')
+  if failure
+    div.banner.failure
+      p Could not be created: #{message}
+  h1= title
+  form(action='/createevent', method='post')
+    ul.form-style-1
+      li
+        label(for='name') Name
+          span.required *
+        input.field-long(name='name', type='text', id='name', value=name)
+      li
+        label(for='code') Event Code
+          span.required *
+        input.field-long(name='code', type='text', id='code', value=code)
+      li
+        label(for='passwd') Event Password
+          span.required *
+        p Used by you to launch the event
+        input.field-long(name='passwd', type='text', id='passwd')
+      li
+        label(for='description') Description
+        textarea.field-long.field-textarea(name='description', type='textarea', id='description', placeholder='A nice little description for your event :)') #{interests}
+      li.button
+        input(type='submit', value='Create')
