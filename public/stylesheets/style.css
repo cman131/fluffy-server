@@ -14,6 +14,20 @@ a {
 ul {
     list-style: none;
 }
+.success {
+  background-color: rgba(130, 239, 130, 0.5);
+  color: rgb(94, 216, 94);
+}
+.failure {
+  background-color: rgba(239, 130, 130, 0.5);
+  color: #D83E3E;
+}
+.banner {
+  width: 100%;
+  border: inset 1px;
+  padding-left: 10px;
+  font-weight: bold;
+}
 
 header {
     top: 0;
