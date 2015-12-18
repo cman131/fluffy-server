@@ -13,6 +13,7 @@ router.get('/registration', function(req, res, next) {
   result.interests = req.query.interests || '';
   if(req.query.failure) {
     result.failure = true;
+    result.message = req.query.message || 'Issue Unknown. Contact admin.';
   }
   res.render('registration', result);
 });
@@ -36,6 +37,23 @@ router.get('/manage', function(req, res, next) {
 });
 
 router.post('/register', function(req, res) {
+  // Ensure we have required params
+  if(!req.body.email || !req.body.name) {
+    console.log('Not added. Missing parameters.');
+    res.redirect('/registration?failure=true&message=Missing required fields.'+
+     '&name='+(req.body.name || '')+
+     '&email='+(req.body.email || '')+
+     '&interests='+(req.body.interests || ''));
+    return;
+  } else if(!validateEmail(req.body.email)) {
+    console.log('Not added. Invalid email address.');
+    res.redirect('/registration?failure=true&message=Invalid email address.'+
+     '&name='+(req.body.name || '')+
+     '&email='+(req.body.email || '')+
+     '&interests='+(req.body.interests || ''));
+    return;
+  }
+
   var config = require('../config');
   var MongoClient = req.db;
   var temp = {
@@ -62,7 +80,7 @@ router.post('/register', function(req, res) {
         } else {
           console.log('Not added. Already in db.');
           db.close();
-          res.redirect('/registration?failure=true&name='+temp.name+
+          res.redirect('/registration?failure=true&message=Already registered.&name='+temp.name+
            '&email='+temp.email+(temp.interests ? '&interests='+temp.interests : ''));
           return;
         }
@@ -113,6 +131,11 @@ function initiateEvent(MongoClient) {
 function shuffle(o){
   for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
   return o;
+}
+
+function validateEmail(email) {
+  var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(email);
 }
 
 module.exports = router;

@@ -4,7 +4,7 @@ block content
   link(rel='stylesheet', href='/stylesheets/registration.css')
   if failure
     div.banner.failure
-      p Could not be added. May already be registered.
+      p Could not be added: #{message}
   h1= title
   form(action='/register', method='post')
     ul.form-style-1
