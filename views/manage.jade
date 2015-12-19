@@ -5,27 +5,28 @@ block content
   if isaddition || iscreation
     div.banner.success
       p Successfully #{isaddition ? 'added' : 'created'}.
-  h1 #{title}
-  h3 Code
-  p.subtext #{code}
-  if description
-    h3 Description
-    p.subtext #{description}
-  h3 Participants
-  if participants.length > 0
-    ul
-      each val in participants
-        li.participant= val.name
-  else
-    p.subtext No one has registered yet
-  h3 Register For Event
-  input.subtext(type='submit', value='Register', onclick='window.location.href="/registration?code=#{code}"')
-  h3 Launch Event
-  form(action='/start?code='+code, method='post')
-    ul.form-style-1
-      li
-        label(for='passwd') Event Password
-          span.required *
-        input.field-long(name='passwd', type='text', id='passwd')
-      li.button
-        input(type='submit', value='Launch')
+  div.center-block
+    h1 #{title}
+    h3 Code
+    p.subtext #{code}
+    if description
+      h3 Description
+      p.subtext #{description}
+    h3 Participants
+    if participants.length > 0
+      ul
+        each val in participants
+          li.participant= val.name
+    else
+      p.subtext No one has registered yet
+    h3 Register For Event
+    input.subtext(type='submit', value='Register', onclick='window.location.href="/registration?code=#{code}"')
+    h3 Launch Event
+    form(action='/start?code='+code, method='post')
+      ul.form-style-1
+        li
+          label(for='passwd') Event Password
+            span.required *
+          input.field-long(name='passwd', type='text', id='passwd')
+        li.button
+          input(type='submit', value='Launch')
