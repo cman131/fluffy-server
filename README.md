@@ -8,6 +8,7 @@ This server gets repurposed often, but for now it is a secret santa manager. Peo
  - npm
  - mongodb database
    - add a "participants" collection
+   - add an "events" collection
  - smtp email address
    - I used gmail
 
