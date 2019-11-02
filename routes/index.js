@@ -87,6 +87,7 @@ router.get('/registration', function(req, res, next) {
   var result = {title: 'Secret Santa - Register'};
   result.name = req.query.name || '';
   result.email = req.query.email || '';
+  result.address = req.query.address || '';
   result.code = req.query.code || '';
   result.interests = req.query.interests || '';
   if(req.query.failure) {
@@ -129,11 +130,13 @@ router.get('/manage', function(req, res, next) {
 
 router.post('/register', function(req, res) {
   // Ensure we have required params
-  if(!req.body.email || !req.body.name || !req.body.code) {
+  if(!req.body.email || !req.body.name || !req.body.address || !req.body.code) {
+    console.log(req.body.address);
     console.log('Not added. Missing parameters.');
     res.redirect('/registration?failure=true&message=Missing required fields.'+
      '&name='+(req.body.name || '')+
      '&email='+(req.body.email || '')+
+     '&address='+(req.body.address || '')+
      '&interests='+(req.body.interests || ''));
     return;
   } else if(!validateEmail(req.body.email.trim())) {
@@ -141,6 +144,7 @@ router.post('/register', function(req, res) {
     res.redirect('/registration?failure=true&message=Invalid email address.'+
      '&name='+(req.body.name || '')+
      '&email='+(req.body.email || '')+
+     '&address='+(req.body.address || '')+
      '&code='+(req.body.code || '')+
      '&interests='+(req.body.interests || ''));
     return;
@@ -149,6 +153,7 @@ router.post('/register', function(req, res) {
     res.redirect('/registration?failure=true&message=Unrecognized event code.'+
      '&name='+(req.body.name || '')+
      '&email='+(req.body.email || '')+
+     '&address='+(req.body.address || '')+
      '&code='+(req.body.code || '')+
      '&interests='+(req.body.interests || ''));
     return;
@@ -159,12 +164,12 @@ router.post('/register', function(req, res) {
   var temp = {
     name: req.body.name,
     email: req.body.email.trim(),
+    address: req.body.address,
     code: req.body.code.toUpperCase()
   };
   if(req.body.interests) {
     temp.interests = req.body.interests;
   }
-  console.log(config.url);
 
   MongoClient.connect(config.url, function (err, db) {
     if (err) {
@@ -180,6 +185,7 @@ router.post('/register', function(req, res) {
           res.redirect('/registration?failure=true&message=Unrecognized event code.'+
            '&name='+(temp.name || '')+
            '&email='+(temp.email || '')+
+           '&address='+(temp.address || '')+
            '&code='+(temp.code || '')+
            '&interests='+(temp.interests || ''));
           return;
@@ -190,7 +196,7 @@ router.post('/register', function(req, res) {
             db.close();
             res.redirect('/manage?isaddition=true&code='+temp.code);
           } else if(count <= 0) {
-            var cursor = dbpar.insert(temp, function(err) {
+            dbpar.insert(temp, function(err) {
               console.log('Successfully added: ' + temp.name);
               db.close();
               res.redirect('/manage?isaddition=true&code='+temp.code);
@@ -199,7 +205,7 @@ router.post('/register', function(req, res) {
             console.log('Not added. Already in db.');
             db.close();
             res.redirect('/registration?failure=true&message=Already registered.&name='+temp.name+
-             '&email='+temp.email+(temp.interests ? '&interests='+temp.interests : ''));
+             '&email='+temp.email+'&address='+temp.address+(temp.interests ? '&interests='+temp.interests : ''));
             return;
           }
         }); 
@@ -216,19 +222,19 @@ router.post('/start', function(req, res) {
   var config = require('../config');
   var code = req.query.code.toUpperCase();
   req.db.connect(config.url, function(err, db) {
-    db.collection('events').count({code: code, passwd: req.body.passwd}, function(err, count) {
-      if(err || count<=0) {
+    db.collection('events').find({code: code, passwd: req.body.passwd}).toArray(function(err, events) {
+      if(err || !events || events.length <= 0) {
         res.send({ status: 401, body: {} });
         db.close();
       } else {
-        initiateEvent(db, config, code);
+        initiateEvent(db, events[0], config, code);
         res.send({ status: 200, body: {} });
       }
     });
   });
 });
 
-function initiateEvent(db, config, code) {
+function initiateEvent(db, event, config, code) {
   var email = require('emailjs/email');
   var server = email.server.connect({
     user: config.email,
@@ -236,30 +242,46 @@ function initiateEvent(db, config, code) {
     host: 'smtp.gmail.com',
     ssl: true
   });
+  if (!!event.santaAssignments) {
+    sendEmails(server, config, event.santaAssignments);
+  } else {
+    db.collection('participants').find({code: code}).toArray(function(err, docs) {
+      if(err) {
+        console.log(err);
+        return;
+      }
+      var participants = docs;
+      participants = shuffle(participants);
+      sendEmails(server, config, participants);
 
-  db.collection('participants').find({code: code}).toArray(function(err, docs) {
-    if(err) {
-      console.log(err);
-      return;
-    }
-    var participants = docs;
-    participants = shuffle(participants);
-    var emailSent = function(err, message) { console.log(err || message); };
-    for(var i=0; i<participants.length; i++) {
-      var recipient = i+1 >= participants.length ? participants[0] : participants[i+1];
-      var santa = participants[i];
+      db.collection('events').update({ code: event.code }, {
+        $set: {
+          santaAssignments: participants
+        }
+      }, function(err) {
+        console.log('Successfully updated: ' + event.name);
+        db.close();
+      });
+    });
+  }
+}
 
-      server.send({
-        text: 'You will be getting a gift for: ' + recipient.name + '. Merry Christmas!'+
-          (recipient.interests ? "\n\n They're interests include: \n"+recipient.interests : '')+
-          "\n\n Thank you,\n - Fluffy-Server",
-        from: 'Fluffy-Server <'+config.email+'>',
-        to: santa.name+' <'+santa.email+'>',
-        subject: 'Secret Santa'
-      }, emailSent);
-    }
-    db.close();
-  });
+function sendEmails(server, config, participants) {
+  var emailSent = function(err, message) { console.log(err || message); };
+  for(var i=0; i<participants.length; i++) {
+    var recipient = i+1 >= participants.length ? participants[0] : participants[i+1];
+    var santa = participants[i];
+
+    server.send({
+      text: 'You will be getting a gift for: ' + recipient.name + '. Merry Christmas!' +
+        '\n\nTheir mailing address information is: \n' + recipient.address +
+        (recipient.interests ? "\n\n Their interests include: \n"+recipient.interests : '')+
+        "\n\n Thank you,\n - Fluffy-Server",
+      from: 'Fluffy-Server <'+config.email+'>',
+      to: santa.name+' <'+santa.email+'>',
+      subject: 'Secret Santa'
+    }, emailSent);
+  }
 }
 
 function shuffle(o){
