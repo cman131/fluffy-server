@@ -6,6 +6,38 @@ body {
     line-height: 20px;
     color: #333333;
 }
+.nowrap {
+  white-space: nowrap;
+}
+.bold {
+  font-weight: bold;
+}
+.arrow {
+  border: solid black;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 3px;
+}
+
+.right {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+}
+
+.left {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
+}
+
+.up {
+  transform: rotate(-135deg);
+  -webkit-transform: rotate(-135deg);
+}
+
+.down {
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+}
 
 a {
     text-decoration: none;
@@ -21,6 +53,9 @@ ul {
 .failure {
   background-color: rgba(239, 130, 130, 0.5);
   color: #D83E3E;
+}
+.float-right {
+  float: right;
 }
 .banner {
   width: 100%;

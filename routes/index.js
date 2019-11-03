@@ -83,6 +83,19 @@ router.post('/createevent', function(req, res) {
   });
 });
 
+router.get('/report-shipping', function(req, res, next) {
+  var result = {title: 'Secret Santa - Report shipping'};
+  result.recipient = req.query.recipient || '';
+  result.code = req.query.code || '';
+  result.email = req.query.email || '';
+  result.deliveryestimate = req.query.deliveryestimate || '';
+  if(req.query.failure) {
+    result.failure = true;
+    result.message = req.query.message || 'Issue Unknown. Contact admin.';
+  }
+  res.render('report-shipping', result);
+});
+
 router.get('/registration', function(req, res, next) {
   var result = {title: 'Secret Santa - Register'};
   result.name = req.query.name || '';
@@ -209,6 +222,112 @@ router.post('/register', function(req, res) {
             return;
           }
         }); 
+      });
+    }
+  });
+});
+
+router.post('/report-shipping', function(req, res) {
+  console.log(req.body);
+  // Ensure we have required params
+  if(!req.body.email || !req.body.recipient || !req.body.code) {
+    console.log('Not added. Missing parameters.');
+    res.redirect('/report-shipping?failure=true&message=Missing required fields.'+
+     '&recipient='+(req.body.recipient || '')+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || '')+
+     '&deliveryestimate='+(req.body.deliveryestimate || ''));
+    return;
+  } else if(!validateEmail(req.body.email.trim())) {
+    console.log('Not added. Invalid email address.');
+    res.redirect('/report-shipping?failure=true&message=Invalid email address.'+
+     '&recipient='+(req.body.recipient || '')+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || '')+
+     '&deliveryestimate='+(req.body.deliveryestimate || ''));
+    return;
+  } else if(!validateCode(req.body.code)) {
+    console.log('Not added. Invalid Code.');
+    res.redirect('/report-shipping?failure=true&message=Unrecognized event code.'+
+     '&recipient='+(req.body.recipient || '')+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || '')+
+     '&deliveryestimate='+(req.body.deliveryestimate || ''));
+    return;
+  }
+
+  var config = require('../config');
+  var MongoClient = req.db;
+  var temp = {
+    recipient: req.body.recipient,
+    email: req.body.email.trim(),
+    code: req.body.code.toUpperCase()
+  };
+  if(req.body.deliveryestimate) {
+    temp.estimatedDeliveryDate = req.body.deliveryestimate;
+  }
+
+  MongoClient.connect(config.url, function (err, db) {
+    if (err) {
+      throw err;
+    } else {
+      console.log("successfully connected to the database");
+      var dbpar = db.collection('participants');
+      var dbeve = db.collection('events');
+      dbeve.find({code: temp.code}).toArray(function(err, events) {
+        if(err || !events || events.length <= 0) {
+          console.log(err);
+          db.close();
+          res.redirect('/report-shipping?failure=true&message=Unrecognized event code.'+
+           '&recipient='+(temp.recipient || '')+
+           '&email='+(temp.email || '')+
+           '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
+           '&code='+(temp.code || ''));
+          return;
+        }
+        const event = events[0];
+        if (!event.santaAssignments) {
+          db.close();
+          res.redirect('/report-shipping?failure=true&message=This event has not started yet.'+
+           '&recipient='+(temp.recipient || '')+
+           '&email='+(temp.email || '')+
+           '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
+           '&code='+(temp.code || ''));
+          return;
+        }
+        const filteredParticipants = event.santaAssignments.filter(participant => participant.email.toUpperCase() === temp.email.toUpperCase());
+        if (filteredParticipants.length <= 0) {
+          db.close();
+          res.redirect('/report-shipping?failure=true&message=Email unrecognized.'+
+           '&recipient='+(temp.recipient || '')+
+           '&email='+(temp.email || '')+
+           '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
+           '&code='+(temp.code || ''));
+          return;
+        }
+        const sendingParticipant = filteredParticipants[0];
+        let recipientIndex = event.santaAssignments.indexOf(sendingParticipant) + 1;
+        recipientIndex = recipientIndex >= event.santaAssignments.length ? 0 : recipientIndex;
+        const receivingParticipant = event.santaAssignments[recipientIndex];
+        if (receivingParticipant.name.toUpperCase() !== temp.recipient.toUpperCase()) {
+          res.redirect('/report-shipping?failure=true&message=You are not '+temp.recipient+'\'s santa.'+
+           '&recipient='+(temp.recipient || '')+
+           '&email='+(temp.email || '')+
+           '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
+           '&code='+(temp.code || ''));
+          return;
+        }
+
+        const updateBody = {
+          giftShipped: true,
+          estimatedDeliveryDate: temp.estimatedDeliveryDate
+        };
+        console.log(updateBody)
+        dbpar.update({email: receivingParticipant.email, code: temp.code}, { $set: updateBody }, function(err) {
+          console.log('Successfully shipped: ' + temp.recipient);
+          db.close();
+          res.redirect('/manage?isshipped=true&code='+temp.code);
+        });
       });
     }
   });
