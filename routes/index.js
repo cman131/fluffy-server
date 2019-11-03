@@ -133,6 +133,7 @@ router.get('/manage', function(req, res, next) {
           participants: docs,
           code: code,
           description: events[0].description,
+          isStarted: !!events[0].santaAssignments,
           isaddition: (req.query.isaddition ? true : false),
           iscreation: (req.query.iscreation ? true : false)
         });
@@ -427,7 +428,7 @@ router.post('/start', function(req, res) {
         db.close();
       } else {
         initiateEvent(db, events[0], config, code);
-        res.send({ status: 200, body: {} });
+        res.redirect('/manage?code=' + code);
       }
     });
   });

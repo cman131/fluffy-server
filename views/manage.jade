@@ -13,7 +13,7 @@ block content
       h3 Description
       p.subtext #{description}
     h3 Participants
-    if participants.length > 0
+    if participants && participants.length > 0
       ul.participant-list
         each val, index in participants
           li.participant
@@ -21,7 +21,7 @@ block content
               div.badge-icon.success-status(title='Received')
             else if val.giftShipped
               div.badge-icon.in-progress-status(title='Shipped')
-            else
+            else if isStarted
               div.badge-icon.waiting-status(title='Awaiting shipping report')
             p(title="#{val.giftReceived ? 'Received' : (val.giftShipped ? 'Shipped' : 'Awaiting shipping report')}") #{val.name}
             if val.giftReceived
@@ -34,13 +34,16 @@ block content
                     i.arrow.down
                   div.delivery-popup(id='delivery-popup-#{index}', style='display: none') #{val.estimatedDeliveryDate}
                 a.btn-link(href='./report-received?code=#{code}') Report gift received 
-            else
+            else if isStarted
               a.flex-right.btn-link(href='./report-shipping?code=#{code}&recipient=#{val.name}') Report gift shipped
     else
       p.subtext No one has registered yet
-    h3 Register For Event
-    input.subtext(type='submit', value='Register', onclick='window.location.href="/registration?code=#{code}"')
+    if !isStarted
+      h3 Register For Event
+      input.subtext(type='submit', value='Register', onclick='window.location.href="/registration?code=#{code}"')
     h3 Launch Event
+    if isStarted
+      h4 The event has started.
     form(action='/start?code='+code, method='post')
       ul.form-style-1
         li
@@ -48,4 +51,4 @@ block content
             span.required *
           input.field-long(name='passwd', type='text', id='passwd')
         li.button
-          input(type='submit', value='Launch')
+          input(type='submit', value='#{ !isStarted ? "Launch" : "Resend emails" }')
