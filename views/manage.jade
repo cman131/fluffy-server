@@ -2,11 +2,11 @@ extends layout
 
 block content
   link(rel='stylesheet', href='/stylesheets/manage.css')
-  if isaddition || iscreation
+  if isaddition || isshipped || iscreation
     div.banner.success
-      p Successfully #{isaddition ? 'added' : 'created'}.
+      p Successfully #{isaddition ? 'added' : (isshipped ? 'shipped' : 'created')}.
   div.center-block
-    h1 #{title}
+    h1.nowrap #{title}
     h3 Code
     p.subtext #{code}
     if description
@@ -14,9 +14,22 @@ block content
       p.subtext #{description}
     h3 Participants
     if participants.length > 0
-      ul
-        each val in participants
-          li.participant= val.name
+      ul.participant-list
+        each val, index in participants
+          li.participant
+            if val.giftShipped
+              div.badge-icon.success-status(title='Shipped')
+            else
+              div.badge-icon.waiting-status(title='Awaiting shipping report')
+            p(title="#{val.giftShipped ? 'Shipped' : 'Awaiting shipping report'}") #{val.name}
+            if val.giftShipped
+              div.badge.flex-right
+                if val.estimatedDeliveryDate
+                  p.btn-link.delivery-toggle(onmouseenter='document.querySelector("#delivery-popup-#{index}").style.display = "block"', onmouseleave='document.querySelector("#delivery-popup-#{index}").style.display = "none"') Estimated delivery
+                    i.arrow.down
+                  div.delivery-popup(id='delivery-popup-#{index}', style='display: none') #{val.estimatedDeliveryDate}
+            else
+              a.flex-right.btn-link(href='./report-shipping?code=#{code}&recipient=#{val.name}') Report gift shipped
     else
       p.subtext No one has registered yet
     h3 Register For Event
