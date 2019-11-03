@@ -59,6 +59,7 @@ h3 {
   border: 1px solid black;
   width: 100%;
   padding: 5px;
+  z-index: 22;
 }
 p {
   margin: 0;
