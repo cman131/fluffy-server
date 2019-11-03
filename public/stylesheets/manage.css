@@ -81,6 +81,11 @@ p {
 .badge p {
   margin: 0;
 }
+.in-progress-status {
+  border-color: rgb(233, 236, 18);
+  color: rgb(233, 236, 18);
+  background-color: rgb(233, 236, 18);
+}
 .success-status {
   border-color: rgb(94, 216, 94);
   color: rgb(94, 216, 94);
