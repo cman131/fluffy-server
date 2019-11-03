@@ -17,17 +17,23 @@ block content
       ul.participant-list
         each val, index in participants
           li.participant
-            if val.giftShipped
-              div.badge-icon.success-status(title='Shipped')
+            if val.giftReceived
+              div.badge-icon.success-status(title='Received')
+            else if val.giftShipped
+              div.badge-icon.in-progress-status(title='Shipped')
             else
               div.badge-icon.waiting-status(title='Awaiting shipping report')
-            p(title="#{val.giftShipped ? 'Shipped' : 'Awaiting shipping report'}") #{val.name}
-            if val.giftShipped
+            p(title="#{val.giftReceived ? 'Received' : (val.giftShipped ? 'Shipped' : 'Awaiting shipping report')}") #{val.name}
+            if val.giftReceived
+              div.badge.flex-right
+                p Gift received.
+            else if val.giftShipped
               div.badge.flex-right
                 if val.estimatedDeliveryDate
                   p.btn-link.delivery-toggle(onmouseenter='document.querySelector("#delivery-popup-#{index}").style.display = "block"', onmouseleave='document.querySelector("#delivery-popup-#{index}").style.display = "none"') Estimated delivery
                     i.arrow.down
                   div.delivery-popup(id='delivery-popup-#{index}', style='display: none') #{val.estimatedDeliveryDate}
+                a.btn-link(href='./report-received?code=#{code}') Report gift received 
             else
               a.flex-right.btn-link(href='./report-shipping?code=#{code}&recipient=#{val.name}') Report gift shipped
     else

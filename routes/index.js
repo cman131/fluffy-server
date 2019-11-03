@@ -333,6 +333,86 @@ router.post('/report-shipping', function(req, res) {
   });
 });
 
+router.get('/report-received', function(req, res, next) {
+  var result = {title: 'Secret Santa - Report gift received'};
+  result.code = req.query.code || '';
+  result.email = req.query.email || '';
+  if(req.query.failure) {
+    result.failure = true;
+    result.message = req.query.message || 'Issue Unknown. Contact admin.';
+  }
+  res.render('report-received', result);
+});
+
+router.post('/report-received', function(req, res) {
+  console.log(req.body);
+  // Ensure we have required params
+  if(!req.body.email || !req.body.code) {
+    console.log('Not added. Missing parameters.');
+    res.redirect('/report-received?failure=true&message=Missing required fields.'+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  } else if(!validateEmail(req.body.email.trim())) {
+    console.log('Not added. Invalid email address.');
+    res.redirect('/report-received?failure=true&message=Invalid email address.'+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  } else if(!validateCode(req.body.code)) {
+    console.log('Not added. Invalid Code.');
+    res.redirect('/report-received?failure=true&message=Unrecognized event code.'+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  }
+
+  var config = require('../config');
+  var MongoClient = req.db;
+  var temp = {
+    email: req.body.email.trim(),
+    code: req.body.code.toUpperCase()
+  };
+
+  MongoClient.connect(config.url, function (err, db) {
+    if (err) {
+      throw err;
+    } else {
+      console.log("successfully connected to the database");
+      var dbpar = db.collection('participants');
+      var dbeve = db.collection('events');
+      dbeve.count({code: temp.code}, function(err, count) {
+        if(err || count <= 0) {
+          console.log(err);
+          db.close();
+          res.redirect('/report-received?failure=true&message=Unrecognized event code.'+
+           '&email='+(temp.email || '')+
+           '&code='+(temp.code || ''));
+          return;
+        }
+        dbpar.count({email: temp.email, code: temp.code}, function(err, count) {
+          if(err) {
+            console.log(err);
+            db.close();
+            res.redirect('/manage?isaddition=true&code='+temp.code);
+          } else if(count > 0) {
+            dbpar.update({ email: temp.email, code: temp.code }, { $set: { giftReceived: true } }, function(err) {
+              console.log('Successfully received gift: ' + temp.email);
+              db.close();
+              res.redirect('/manage?isreceived=true&code='+temp.code);
+            });
+          } else {
+            console.log('Not added. Unrecognized.');
+            db.close();
+            res.redirect('/report-received?failure=true&message=Email unrecognized.&code='+temp.code+'&email='+temp.email);
+            return;
+          }
+        }); 
+      });
+    }
+  });
+});
+
 router.post('/start', function(req, res) {
   if(!req.query.code || !validateCode(req.query.code) || !req.body.passwd) {
     res.send({ status: 401, body: {} });

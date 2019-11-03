@@ -1,0 +1,20 @@
+extends layout
+
+block content
+  link(rel='stylesheet', href='/stylesheets/registration.css')
+  if failure
+    div.banner.failure
+      p Could not be added: #{message}
+  h1= title
+  form(action='/report-received', method='post')
+    ul.form-style-1
+      li
+        label(for='code') Event Code
+          span.required *
+        input.field-long(name='code', type='text', id='code', value=code)
+      li
+        label(for='email') Your Email Address
+          span.required *
+        input.field-long(name='email', type='text', id='email', value=email)
+      li.button
+        input(type='submit', value='Report gift received')
