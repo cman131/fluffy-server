@@ -391,22 +391,27 @@ router.post('/report-received', function(req, res) {
            '&code='+(temp.code || ''));
           return;
         }
-        dbpar.count({email: temp.email, code: temp.code}, function(err, count) {
+        dbpar.find({email: temp.email, code: temp.code}).toArray(function(err, results) {
           if(err) {
             console.log(err);
             db.close();
             res.redirect('/manage?isaddition=true&code='+temp.code);
-          } else if(count > 0) {
-            dbpar.update({ email: temp.email, code: temp.code }, { $set: { giftReceived: true } }, function(err) {
-              console.log('Successfully received gift: ' + temp.email);
-              db.close();
-              res.redirect('/manage?isreceived=true&code='+temp.code);
-            });
-          } else {
+          } else if (results.length === 0) {
             console.log('Not added. Unrecognized.');
             db.close();
             res.redirect('/report-received?failure=true&message=Email unrecognized.&code='+temp.code+'&email='+temp.email);
             return;
+          } else if (!results[0].giftShipped) {
+            console.log('Not added. Not yet shipped.');
+            db.close();
+            res.redirect('/report-received?failure=true&message=Your gift has not yet shipped.&code='+temp.code+'&email='+temp.email);
+            return;
+          } else {
+            dbpar.update({ email: temp.email, giftShipped: true, code: temp.code }, { $set: { giftReceived: true } }, function(err) {
+              console.log('Successfully received gift: ' + temp.email);
+              db.close();
+              res.redirect('/manage?isreceived=true&code='+temp.code);
+            });
           }
         }); 
       });
