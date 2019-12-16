@@ -176,10 +176,10 @@ router.post('/register', function(req, res) {
   var config = require('../config');
   var MongoClient = req.db;
   var temp = {
-    name: req.body.name,
+    name: req.body.name.trim(),
     email: req.body.email.trim(),
-    address: req.body.address,
-    code: req.body.code.toUpperCase()
+    address: req.body.address.trim(),
+    code: req.body.code.trim().toUpperCase()
   };
   if(req.body.interests) {
     temp.interests = req.body.interests;
@@ -296,7 +296,7 @@ router.post('/report-shipping', function(req, res) {
            '&code='+(temp.code || ''));
           return;
         }
-        const filteredParticipants = event.santaAssignments.filter(participant => participant.email.toUpperCase() === temp.email.toUpperCase());
+        const filteredParticipants = event.santaAssignments.filter(participant => participant.email.trim().toUpperCase() === temp.email.trim().toUpperCase());
         if (filteredParticipants.length <= 0) {
           db.close();
           res.redirect('/report-shipping?failure=true&message=Email unrecognized.'+
@@ -310,8 +310,8 @@ router.post('/report-shipping', function(req, res) {
         let recipientIndex = event.santaAssignments.indexOf(sendingParticipant) + 1;
         recipientIndex = recipientIndex >= event.santaAssignments.length ? 0 : recipientIndex;
         const receivingParticipant = event.santaAssignments[recipientIndex];
-        if (receivingParticipant.name.toUpperCase() !== temp.recipient.toUpperCase()) {
-          res.redirect('/report-shipping?failure=true&message=You are not '+temp.recipient+'\'s santa.'+
+        if (receivingParticipant.name.trim().toUpperCase() !== temp.recipient.trim().toUpperCase()) {
+          res.redirect('/report-shipping?failure=true&message=You are not '+temp.recipient.trim()+'\'s santa.'+
            '&recipient='+(temp.recipient || '')+
            '&email='+(temp.email || '')+
            '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
