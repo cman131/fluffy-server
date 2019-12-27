@@ -83,6 +83,170 @@ router.post('/createevent', function(req, res) {
   });
 });
 
+router.get('/message-participant', function(req, res, next) {
+  var result = {title: 'Secret Santa - Message a participant anonymously'};
+  result.recipient = req.query.recipient || '';
+  result.code = req.query.code || '';
+  result.messagebody = req.query.messagebody || '';
+  if(req.query.failure) {
+    result.failure = true;
+    result.message = req.query.message || 'Issue Unknown. Contact admin.';
+  }
+  res.render('message-participant', result);
+});
+
+router.get('/message-santa', function(req, res, next) {
+  var result = {title: 'Secret Santa - Message your secret santa'};
+  result.email = req.query.email || '';
+  result.code = req.query.code || '';
+  result.messagebody = req.query.messagebody || '';
+  if(req.query.failure) {
+    result.failure = true;
+    result.message = req.query.message || 'Issue Unknown. Contact admin.';
+  }
+  res.render('message-santa', result);
+});
+
+router.post('/message-santa', function(req, res) {
+  console.log(req.body);
+  // Ensure we have required params
+  if(!req.body.email || !req.body.messagebody || !req.body.code) {
+    console.log('Not added. Missing parameters.');
+    res.redirect('/message-santa?failure=true&message=Missing required fields.'+
+     '&messagebody='+(req.body.messagebody || '')+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  } else if(!validateEmail(req.body.email.trim())) {
+    console.log('Not added. Invalid email address.');
+    res.redirect('/message-santa?failure=true&message=Invalid email address.'+
+     '&messagebody='+(req.body.messagebody || '')+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  } else if(!validateCode(req.body.code)) {
+    console.log('Not added. Invalid Code.');
+    res.redirect('/message-santa?failure=true&message=Unrecognized event code.'+
+     '&messagebody='+(req.body.messagebody || '')+
+     '&email='+(req.body.email || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  }
+
+  var config = require('../config');
+  var MongoClient = req.db;
+  var temp = {
+    messagebody: req.body.messagebody,
+    email: req.body.email.trim(),
+    code: req.body.code.toUpperCase()
+  };
+
+  MongoClient.connect(config.url, function (err, db) {
+    if (err) {
+      throw err;
+    } else {
+      console.log("successfully connected to the database");
+      var dbeve = db.collection('events');
+      dbeve.find({code: temp.code}).toArray(function(err, events) {
+        if(err || !events || events.length <= 0) {
+          console.log(err);
+          db.close();
+          res.redirect('/message-santa?failure=true&message=Unrecognized event code.'+
+            '&messagebody='+(req.body.messagebody || '')+
+            '&email='+(req.body.email || '')+
+            '&code='+(req.body.code || ''));
+          return;
+        }
+        const event = events[0];
+        if (!event.santaAssignments) {
+          db.close();
+          res.redirect('/message-santa?failure=true&message=This event has not started yet.'+
+            '&messagebody='+(req.body.messagebody || '')+
+            '&email='+(req.body.email || '')+
+            '&code='+(req.body.code || ''));
+          return;
+        }
+        const filteredParticipants = event.santaAssignments.filter(participant => participant.email.trim().toUpperCase() === temp.email.trim().toUpperCase());
+        if (filteredParticipants.length <= 0) {
+          db.close();
+          res.redirect('/message-santa?failure=true&message=Email unrecognized.'+
+            '&messagebody='+(req.body.messagebody || '')+
+            '&email='+(req.body.email || '')+
+            '&code='+(req.body.code || ''));
+          return;
+        }
+        const sendingParticipant = filteredParticipants[0];
+        let recipientIndex = event.santaAssignments.indexOf(sendingParticipant) - 1;
+        recipientIndex = recipientIndex <= -1 ? event.santaAssignments.length - 1 : recipientIndex;
+        const receivingParticipant = event.santaAssignments[recipientIndex];
+
+        sendCustomEmail(config, receivingParticipant, temp.messagebody);
+        db.close();
+        res.redirect('/manage?successfuloperation=true&code='+temp.code);
+      });
+    }
+  });
+});
+
+router.post('/message-participant', function(req, res) {
+  // Ensure we have required params
+  if(!req.body.recipient || !req.body.messagebody || !req.body.code) {
+    console.log('Not added. Missing parameters.');
+    res.redirect('/message-participant?failure=true&message=Missing required fields.'+
+     '&recipient='+(req.body.recipient || '')+
+     '&messagebody='+(req.body.messagebody || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  } else if(!validateCode(req.body.code)) {
+    console.log('Not added. Invalid Code.');
+    res.redirect('/message-participant?failure=true&message=Unrecognized event code.'+
+     '&recipient='+(req.body.recipient || '')+
+     '&messagebody='+(req.body.messagebody || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  }
+
+  var config = require('../config');
+  var MongoClient = req.db;
+  var temp = {
+    recipient: req.body.recipient.trim(),
+    messagebody: req.body.messagebody,
+    code: req.body.code.toUpperCase()
+  };
+
+  MongoClient.connect(config.url, function (err, db) {
+    if (err) {
+      throw err;
+    } else {
+      console.log("successfully connected to the database");
+      var dbpar = db.collection('participants');
+      dbpar.find({code: temp.code}).toArray(function(err, participants) {
+        if(err || !participants || participants.length <= 0) {
+          console.log(err);
+          db.close();
+          res.redirect('/message-participant?failure=true&message=Unrecognized event code.'+
+          '&recipient='+(req.body.recipient || '')+
+          '&messagebody='+(req.body.messagebody || '')+
+          '&code='+(req.body.code || ''));
+          return;
+        }
+        const filteredParticipants = participants.filter(participant => participant.name.trim().toUpperCase() === temp.recipient.trim().toUpperCase());
+        if (filteredParticipants.length <= 0) {
+          db.close();
+          res.redirect('/message-participant?failure=true&message=Recipient unrecognized.'+
+            '&recipient='+(req.body.recipient || '')+
+            '&messagebody='+(req.body.messagebody || '')+
+            '&code='+(req.body.code || ''));
+          return;
+        }
+        sendCustomEmail(config, filteredParticipants[0], temp.messagebody);
+        db.close();
+        res.redirect('/manage?successfuloperation=true&code='+temp.code);
+      });
+    }
+  });
+});
+
 router.get('/report-shipping', function(req, res, next) {
   var result = {title: 'Secret Santa - Report shipping'};
   result.recipient = req.query.recipient || '';
@@ -469,6 +633,27 @@ function initiateEvent(db, event, config, code) {
       });
     });
   }
+}
+
+function sendCustomEmail(config, recipient, message) {
+  var email = require('emailjs/email');
+  var server = email.server.connect({
+    user: config.email,
+    password: config.epass,
+    host: 'smtp.gmail.com',
+    ssl: true
+  });
+
+  server.send(
+    {
+      text: message,
+      from: 'Fluffy-Server <'+config.email+'>',
+      to: recipient.name+' <'+recipient.email+'>',
+      subject: 'Secret Santa - Anonymous message'
+    },
+    (err, message) => console.log(err || message)
+  )
+  console.log('email sent to ' + recipient.email);
 }
 
 function sendEmails(server, config, participants) {

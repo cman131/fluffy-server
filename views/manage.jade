@@ -23,6 +23,8 @@ block content
               div.badge-icon.in-progress-status(title='Shipped')
             else if isStarted
               div.badge-icon.waiting-status(title='Awaiting shipping report')
+            a.email-btn(href="./message-participant?code=#{code}&recipient=#{val.name}", title="Message participant")
+              span.email-icon &#9993
             p(title="#{val.giftReceived ? 'Received' : (val.giftShipped ? 'Shipped' : 'Awaiting shipping report')}") #{val.name}
             if val.giftReceived
               div.badge.flex-right
@@ -44,6 +46,9 @@ block content
     h3 Launch Event
     if isStarted
       h4 The event has started.
+      a.btn-link.email-btn(href="./message-santa?code=#{code}", title="Message your santa")
+        span.email-icon &#9993
+        p Message your santa
     form(action='/start?code='+code, method='post')
       ul.form-style-1
         li

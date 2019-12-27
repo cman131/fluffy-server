@@ -161,3 +161,10 @@ input[type=submit]:hover, input[type=button]:hover{
 .form-style-1 .required{
     color:red;
 }
+.email-btn {
+  display: flex;
+  max-width: 150px;
+}
+.email-icon {
+  margin-right: 5px;
+}
