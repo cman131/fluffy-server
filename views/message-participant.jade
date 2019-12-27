@@ -1,0 +1,24 @@
+extends layout
+
+block content
+  link(rel='stylesheet', href='/stylesheets/registration.css')
+  if failure
+    div.banner.failure
+      p Could not be sent: #{message}
+  h1= title
+  form(action='/message-participant', method='post')
+    ul.form-style-1
+      li
+        label(for='recipient') Recipient Name
+          span.required *
+        input.field-long(name='recipient', type='text', id='recipient', value=recipient)
+      li
+        label(for='code') Event Code
+          span.required *
+        input.field-long(name='code', type='text', id='code', value=code)
+      li
+        label(for='messagebody') Message body
+          span.required *
+        textarea.field-long.field-textarea(name='messagebody', type='textarea', id='messagebody', placeholder='The message you want to send') #{messagebody}
+      li.button
+        input(type='submit', value='Send message')
