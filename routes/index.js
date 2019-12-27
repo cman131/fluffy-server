@@ -113,21 +113,21 @@ router.post('/message-santa', function(req, res) {
   if(!req.body.email || !req.body.messagebody || !req.body.code) {
     console.log('Not added. Missing parameters.');
     res.redirect('/message-santa?failure=true&message=Missing required fields.'+
-     '&messagebody='+(req.body.messagebody || '')+
+     '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
      '&email='+(req.body.email || '')+
      '&code='+(req.body.code || ''));
     return;
   } else if(!validateEmail(req.body.email.trim())) {
     console.log('Not added. Invalid email address.');
     res.redirect('/message-santa?failure=true&message=Invalid email address.'+
-     '&messagebody='+(req.body.messagebody || '')+
+     '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
      '&email='+(req.body.email || '')+
      '&code='+(req.body.code || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/message-santa?failure=true&message=Unrecognized event code.'+
-     '&messagebody='+(req.body.messagebody || '')+
+     '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
      '&email='+(req.body.email || '')+
      '&code='+(req.body.code || ''));
     return;
@@ -152,7 +152,7 @@ router.post('/message-santa', function(req, res) {
           console.log(err);
           db.close();
           res.redirect('/message-santa?failure=true&message=Unrecognized event code.'+
-            '&messagebody='+(req.body.messagebody || '')+
+            '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
             '&email='+(req.body.email || '')+
             '&code='+(req.body.code || ''));
           return;
@@ -161,7 +161,7 @@ router.post('/message-santa', function(req, res) {
         if (!event.santaAssignments) {
           db.close();
           res.redirect('/message-santa?failure=true&message=This event has not started yet.'+
-            '&messagebody='+(req.body.messagebody || '')+
+            '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
             '&email='+(req.body.email || '')+
             '&code='+(req.body.code || ''));
           return;
@@ -170,7 +170,7 @@ router.post('/message-santa', function(req, res) {
         if (filteredParticipants.length <= 0) {
           db.close();
           res.redirect('/message-santa?failure=true&message=Email unrecognized.'+
-            '&messagebody='+(req.body.messagebody || '')+
+            '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
             '&email='+(req.body.email || '')+
             '&code='+(req.body.code || ''));
           return;
@@ -194,14 +194,14 @@ router.post('/message-participant', function(req, res) {
     console.log('Not added. Missing parameters.');
     res.redirect('/message-participant?failure=true&message=Missing required fields.'+
      '&recipient='+(req.body.recipient || '')+
-     '&messagebody='+(req.body.messagebody || '')+
+     '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
      '&code='+(req.body.code || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/message-participant?failure=true&message=Unrecognized event code.'+
      '&recipient='+(req.body.recipient || '')+
-     '&messagebody='+(req.body.messagebody || '')+
+     '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
      '&code='+(req.body.code || ''));
     return;
   }
@@ -226,7 +226,7 @@ router.post('/message-participant', function(req, res) {
           db.close();
           res.redirect('/message-participant?failure=true&message=Unrecognized event code.'+
           '&recipient='+(req.body.recipient || '')+
-          '&messagebody='+(req.body.messagebody || '')+
+          '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
           '&code='+(req.body.code || ''));
           return;
         }
@@ -235,7 +235,7 @@ router.post('/message-participant', function(req, res) {
           db.close();
           res.redirect('/message-participant?failure=true&message=Recipient unrecognized.'+
             '&recipient='+(req.body.recipient || '')+
-            '&messagebody='+(req.body.messagebody || '')+
+            '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
             '&code='+(req.body.code || ''));
           return;
         }
