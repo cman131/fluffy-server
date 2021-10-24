@@ -1,6 +1,20 @@
 var express = require('express');
 var router = express.Router();
 
+function databaseConnection(req, dbFunction) {
+  var config = require('../config');
+  var MongoClient = req.db;
+  MongoClient.connect(config.url, (err, client) => {
+    try {
+      dbFunction(err, client, err ? undefined : client.db('secretsanta'));
+    }
+    catch(err) {
+      console.log(err);
+      client.close();
+    }
+  });
+};
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Fluffy Server - Secret Santa' });
@@ -38,8 +52,6 @@ router.post('/createevent', function(req, res) {
     return;
   }
 
-  var config = require('../config');
-  var MongoClient = req.db;
   var temp = {
     name: req.body.name,
     passwd: req.body.passwd,
@@ -49,10 +61,10 @@ router.post('/createevent', function(req, res) {
     temp.description = req.body.description;
   }
 
-  MongoClient.connect(config.url, function (err, db) {
+  databaseConnection(req, (err, client, db) => {
     if (err) {
       console.log(err);
-      db.close();
+      client.close();
       res.redirect('/create?failure=true'+
        '&name='+(req.body.name || '')+
        '&code='+(req.body.code || '')+
@@ -64,7 +76,7 @@ router.post('/createevent', function(req, res) {
       dbeve.count({code: temp.code}, function(err, count) {
         if(err || count > 0) {
           console.log(err);
-          db.close();
+          client.close();
           res.redirect('/create?failure=true&message=Event code already taken.'+
            '&name='+(req.body.name || '')+
            '&code='+(req.body.code || '')+
@@ -74,7 +86,7 @@ router.post('/createevent', function(req, res) {
         } else {
           var cursor = dbeve.insert(temp, function(err) {
             console.log('Successfully created: ' + temp.name);
-            db.close();
+            client.close();
             res.redirect('/manage?iscreation=true&code='+temp.code);
           });
         }
@@ -141,7 +153,7 @@ router.post('/message-santa', function(req, res) {
     code: req.body.code.toUpperCase()
   };
 
-  MongoClient.connect(config.url, function (err, db) {
+  databaseConnection(req, (err, client, db) => {
     if (err) {
       throw err;
     } else {
@@ -150,7 +162,7 @@ router.post('/message-santa', function(req, res) {
       dbeve.find({code: temp.code}).toArray(function(err, events) {
         if(err || !events || events.length <= 0) {
           console.log(err);
-          db.close();
+          client.close();
           res.redirect('/message-santa?failure=true&message=Unrecognized event code.'+
             '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
             '&email='+(req.body.email || '')+
@@ -159,7 +171,7 @@ router.post('/message-santa', function(req, res) {
         }
         const event = events[0];
         if (!event.santaAssignments) {
-          db.close();
+          client.close();
           res.redirect('/message-santa?failure=true&message=This event has not started yet.'+
             '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
             '&email='+(req.body.email || '')+
@@ -168,7 +180,7 @@ router.post('/message-santa', function(req, res) {
         }
         const filteredParticipants = event.santaAssignments.filter(participant => participant.email.trim().toUpperCase() === temp.email.trim().toUpperCase());
         if (filteredParticipants.length <= 0) {
-          db.close();
+          client.close();
           res.redirect('/message-santa?failure=true&message=Email unrecognized.'+
             '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
             '&email='+(req.body.email || '')+
@@ -181,7 +193,7 @@ router.post('/message-santa', function(req, res) {
         const receivingParticipant = event.santaAssignments[recipientIndex];
 
         sendCustomEmail(config, receivingParticipant, temp.messagebody);
-        db.close();
+        client.close();
         res.redirect('/manage?successfuloperation=true&code='+temp.code);
       });
     }
@@ -214,7 +226,7 @@ router.post('/message-participant', function(req, res) {
     code: req.body.code.toUpperCase()
   };
 
-  MongoClient.connect(config.url, function (err, db) {
+  databaseConnection(req, (err, client, db) => {
     if (err) {
       throw err;
     } else {
@@ -223,7 +235,7 @@ router.post('/message-participant', function(req, res) {
       dbpar.find({code: temp.code}).toArray(function(err, participants) {
         if(err || !participants || participants.length <= 0) {
           console.log(err);
-          db.close();
+          client.close();
           res.redirect('/message-participant?failure=true&message=Unrecognized event code.'+
           '&recipient='+(req.body.recipient || '')+
           '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
@@ -232,7 +244,7 @@ router.post('/message-participant', function(req, res) {
         }
         const filteredParticipants = participants.filter(participant => participant.name.trim().toUpperCase() === temp.recipient.trim().toUpperCase());
         if (filteredParticipants.length <= 0) {
-          db.close();
+          client.close();
           res.redirect('/message-participant?failure=true&message=Recipient unrecognized.'+
             '&recipient='+(req.body.recipient || '')+
             '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
@@ -240,7 +252,7 @@ router.post('/message-participant', function(req, res) {
           return;
         }
         sendCustomEmail(config, filteredParticipants[0], temp.messagebody);
-        db.close();
+        client.close();
         res.redirect('/manage?successfuloperation=true&code='+temp.code);
       });
     }
@@ -280,15 +292,16 @@ router.get('/manage', function(req, res, next) {
     return;
   }
   var code = req.query.code.toUpperCase();
-  var config = require('../config');
-  req.db.connect(config.url, function(err, db) {
+  databaseConnection(req, (err, client, db) => {
     if (err) {
       console.log(err);
+      client.close();
       return;
     }
     db.collection('events').find({code: code}).toArray(function(err, events) {
       if(events.length <= 0) {
         res.render('choose', {title: 'Choose Event', failure: true});
+        client.close();
         return;
       }
       db.collection('participants').find({code: code}).toArray(function(err, docs) {
@@ -301,6 +314,33 @@ router.get('/manage', function(req, res, next) {
           isaddition: (req.query.isaddition ? true : false),
           iscreation: (req.query.iscreation ? true : false)
         });
+        client.close();
+      });
+    });
+  });
+});
+
+router.get('/event-participants-list/:code', function(req, res) {
+  if(!req.params.code || !validateCode(req.params.code)) {
+    res.send({status: 404});
+    return;
+  }
+  var code = req.params.code.toUpperCase();
+  databaseConnection(req, (err, client, db) => {
+    if (err) {
+      console.log(err);
+      client.close();
+      return;
+    }
+    db.collection('events').find({code: code}).toArray(function(err, events) {
+      if(events.length <= 0) {
+        res.send({status: 404});
+        client.close();
+        return;
+      }
+      db.collection('participants').find({code: code}).toArray(function(err, docs) {
+        res.send({ status: 200, items: docs });
+        client.close();
       });
     });
   });
@@ -337,19 +377,18 @@ router.post('/register', function(req, res) {
     return;
   }
 
-  var config = require('../config');
-  var MongoClient = req.db;
   var temp = {
     name: req.body.name.trim(),
     email: req.body.email.trim(),
     address: req.body.address.trim(),
-    code: req.body.code.trim().toUpperCase()
+    code: req.body.code.trim().toUpperCase(),
+    spouse: req.body.spouse
   };
   if(req.body.interests) {
     temp.interests = req.body.interests;
   }
 
-  MongoClient.connect(config.url, function (err, db) {
+  databaseConnection(req, (err, client, db) => {
     if (err) {
       throw err;
     } else {
@@ -359,7 +398,7 @@ router.post('/register', function(req, res) {
       dbeve.count({code: temp.code}, function(err, count) {
         if(err || count <= 0) {
           console.log(err);
-          db.close();
+          client.close();
           res.redirect('/registration?failure=true&message=Unrecognized event code.'+
            '&name='+(temp.name || '')+
            '&email='+(temp.email || '')+
@@ -371,17 +410,17 @@ router.post('/register', function(req, res) {
         dbpar.count({email: temp.email, code: temp.code}, function(err, count) {
           if(err) {
             console.log(err);
-            db.close();
+            client.close();
             res.redirect('/manage?isaddition=true&code='+temp.code);
           } else if(count <= 0) {
             dbpar.insert(temp, function(err) {
               console.log('Successfully added: ' + temp.name);
-              db.close();
+              client.close();
               res.redirect('/manage?isaddition=true&code='+temp.code);
             });
           } else {
             console.log('Not added. Already in db.');
-            db.close();
+            client.close();
             res.redirect('/registration?failure=true&message=Already registered.&name='+temp.name+
              '&email='+temp.email+'&address='+temp.address+(temp.interests ? '&interests='+temp.interests : ''));
             return;
@@ -421,8 +460,6 @@ router.post('/report-shipping', function(req, res) {
     return;
   }
 
-  var config = require('../config');
-  var MongoClient = req.db;
   var temp = {
     recipient: req.body.recipient,
     email: req.body.email.trim(),
@@ -432,7 +469,7 @@ router.post('/report-shipping', function(req, res) {
     temp.estimatedDeliveryDate = req.body.deliveryestimate;
   }
 
-  MongoClient.connect(config.url, function (err, db) {
+  databaseConnection(req, (err, client, db) => {
     if (err) {
       throw err;
     } else {
@@ -442,7 +479,7 @@ router.post('/report-shipping', function(req, res) {
       dbeve.find({code: temp.code}).toArray(function(err, events) {
         if(err || !events || events.length <= 0) {
           console.log(err);
-          db.close();
+          client.close();
           res.redirect('/report-shipping?failure=true&message=Unrecognized event code.'+
            '&recipient='+(temp.recipient || '')+
            '&email='+(temp.email || '')+
@@ -452,7 +489,7 @@ router.post('/report-shipping', function(req, res) {
         }
         const event = events[0];
         if (!event.santaAssignments) {
-          db.close();
+          client.close();
           res.redirect('/report-shipping?failure=true&message=This event has not started yet.'+
            '&recipient='+(temp.recipient || '')+
            '&email='+(temp.email || '')+
@@ -462,7 +499,7 @@ router.post('/report-shipping', function(req, res) {
         }
         const filteredParticipants = event.santaAssignments.filter(participant => participant.email.trim().toUpperCase() === temp.email.trim().toUpperCase());
         if (filteredParticipants.length <= 0) {
-          db.close();
+          client.close();
           res.redirect('/report-shipping?failure=true&message=Email unrecognized.'+
            '&recipient='+(temp.recipient || '')+
            '&email='+(temp.email || '')+
@@ -490,7 +527,7 @@ router.post('/report-shipping', function(req, res) {
         console.log(updateBody)
         dbpar.update({email: receivingParticipant.email, code: temp.code}, { $set: updateBody }, function(err) {
           console.log('Successfully shipped: ' + temp.recipient);
-          db.close();
+          client.close();
           res.redirect('/manage?isshipped=true&code='+temp.code);
         });
       });
@@ -532,14 +569,12 @@ router.post('/report-received', function(req, res) {
     return;
   }
 
-  var config = require('../config');
-  var MongoClient = req.db;
   var temp = {
     email: req.body.email.trim(),
     code: req.body.code.toUpperCase()
   };
 
-  MongoClient.connect(config.url, function (err, db) {
+  databaseConnection(req, (err, client, db) => {
     if (err) {
       throw err;
     } else {
@@ -549,7 +584,7 @@ router.post('/report-received', function(req, res) {
       dbeve.count({code: temp.code}, function(err, count) {
         if(err || count <= 0) {
           console.log(err);
-          db.close();
+          client.close();
           res.redirect('/report-received?failure=true&message=Unrecognized event code.'+
            '&email='+(temp.email || '')+
            '&code='+(temp.code || ''));
@@ -558,22 +593,22 @@ router.post('/report-received', function(req, res) {
         dbpar.find({email: temp.email, code: temp.code}).toArray(function(err, results) {
           if(err) {
             console.log(err);
-            db.close();
+            client.close();
             res.redirect('/manage?isaddition=true&code='+temp.code);
           } else if (results.length === 0) {
             console.log('Not added. Unrecognized.');
-            db.close();
+            client.close();
             res.redirect('/report-received?failure=true&message=Email unrecognized.&code='+temp.code+'&email='+temp.email);
             return;
           } else if (!results[0].giftShipped) {
             console.log('Not added. Not yet shipped.');
-            db.close();
+            client.close();
             res.redirect('/report-received?failure=true&message=Your gift has not yet shipped.&code='+temp.code+'&email='+temp.email);
             return;
           } else {
             dbpar.update({ email: temp.email, giftShipped: true, code: temp.code }, { $set: { giftReceived: true } }, function(err) {
               console.log('Successfully received gift: ' + temp.email);
-              db.close();
+              client.close();
               res.redirect('/manage?isreceived=true&code='+temp.code);
             });
           }
@@ -590,20 +625,20 @@ router.post('/start', function(req, res) {
   }
   var config = require('../config');
   var code = req.query.code.toUpperCase();
-  req.db.connect(config.url, function(err, db) {
+  databaseConnection(req, (err, client, db) => {
     db.collection('events').find({code: code, passwd: req.body.passwd}).toArray(function(err, events) {
       if(err || !events || events.length <= 0) {
         res.send({ status: 401, body: {} });
-        db.close();
+        client.close();
       } else {
-        initiateEvent(db, events[0], config, code);
+        initiateEvent(client, db, events[0], config, code);
         res.redirect('/manage?code=' + code);
       }
     });
   });
 });
 
-function initiateEvent(db, event, config, code) {
+function initiateEvent(client, db, event, config, code) {
   var email = require('emailjs/email');
   var server = email.server.connect({
     user: config.email,
@@ -619,8 +654,18 @@ function initiateEvent(db, event, config, code) {
         console.log(err);
         return;
       }
-      var participants = docs;
-      participants = shuffle(participants);
+      var participants = shuffle(docs);
+      let attempts = 0;
+      while (!hasValidPairings(participants) && attempts < 250) {
+        participants = shuffle(participants);
+        attempts += 1;
+      }
+      if (attempts >= 250) {
+        console.log('Failed to achieve a valid match set after 250 attempts.');
+        client.close();
+        return;
+      }
+      console.log('Found a valid result after ' + attempts + ' retries.');
       sendEmails(server, config, participants);
 
       db.collection('events').update({ code: event.code }, {
@@ -629,10 +674,25 @@ function initiateEvent(db, event, config, code) {
         }
       }, function(err) {
         console.log('Successfully updated: ' + event.name);
-        db.close();
+        client.close();
       });
     });
   }
+}
+
+function hasValidPairings(participants) {
+  for (let i = 0; i < participants.length; i++) {
+    const participant = participants[i];
+
+    let nextIndex = i + 1;
+    nextIndex = nextIndex >= participants.length ? 0 : nextIndex;
+
+    const nextParticipant = participants[nextIndex];
+    if (nextParticipant.spouse == participant._id || nextParticipant._id == participant.spouse) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function sendCustomEmail(config, recipient, message) {

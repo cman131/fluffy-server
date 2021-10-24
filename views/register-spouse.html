@@ -1,0 +1,54 @@
+<script>
+  function getNewSpouseButton(value, displayName, checked) {
+    var label = document.createElement('label');
+    var textNode = document.createTextNode(displayName ? displayName : value)
+    var emptyOption = document.createElement('input');
+    emptyOption.type = 'radio';
+    emptyOption.name = 'spouse';
+    emptyOption.value = value;
+    if (checked) {
+        emptyOption.checked = true;
+    }
+    label.appendChild(emptyOption);
+    label.appendChild(textNode);
+    return label;
+  }
+
+  function lockCode() {
+    const codeEl = document.querySelector('#code');
+    const lockCodeBtn = document.querySelector('#lock-code-button');
+    codeEl.readonly = true;
+    codeEl.setAttribute('readonly', true);
+    lockCodeBtn.style.display = "none";
+
+    const code = codeEl.value;
+    fetch('/event-participants-list/' + code).then(response => {
+        if (response.ok) {
+            return response.json()
+        } else {
+            codeEl.removeAttribute('readonly');
+            lockCodeBtn.style.display = "block";
+            alert('Event code does not exist.');
+        }
+    }).then((participantList => {
+        if (participantList.items.length > 0) {
+            const spouseSelection = document.querySelector('#spouse-selection');
+            const header = document.createElement('label');
+            header.appendChild(document.createTextNode("Select spouse:"));
+            spouseSelection.appendChild(header);
+
+            spouseSelection.appendChild(getNewSpouseButton('', 'N/A', true));
+            for (let participant of participantList.items) {
+                spouseSelection.appendChild(getNewSpouseButton(participant._id, participant.name));
+            }
+        } else {
+            codeEl.removeAttribute('readonly');
+            lockCodeBtn.style.display = "block";
+            alert('No participants yet.');
+        }
+    }));
+  }
+</script>
+<button type="button" id="lock-code-button" onClick="lockCode()">Add a spouse restriction</button>
+<div id="spouse-selection">
+</div>
