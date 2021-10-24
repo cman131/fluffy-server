@@ -14,7 +14,7 @@
     "express": "~4.13.1",
     "jade": "~1.11.0",
     "kerberos": "0.0.17",
-    "mongodb": "^2.0.52",
+    "mongodb": "^4.0.0",
     "morgan": "~1.6.1",
     "serve-favicon": "~2.3.0"
   }
