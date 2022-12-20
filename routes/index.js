@@ -530,6 +530,9 @@ router.post('/report-shipping', function(req, res) {
           client.close();
           res.redirect('/manage?isshipped=true&code='+temp.code);
         });
+
+        additionalInfo = temp.estimatedDeliveryDate ? `\nThe estimated delivery info is: ${temp.estimatedDeliveryDate}.` : '';
+        sendCustomEmail(config, receivingParticipant, 'Your secret santa package has been shipped! Keep an eye out for it. ' + additionalInfo);
       });
     }
   });
