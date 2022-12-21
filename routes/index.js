@@ -532,6 +532,7 @@ router.post('/report-shipping', function(req, res) {
         });
 
         additionalInfo = temp.estimatedDeliveryDate ? `\nThe estimated delivery info is: ${temp.estimatedDeliveryDate}.` : '';
+        var config = require('../config');
         sendCustomEmail(config, receivingParticipant, 'Your secret santa package has been shipped! Keep an eye out for it. ' + additionalInfo);
       });
     }
