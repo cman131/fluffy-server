@@ -49,11 +49,14 @@ block content
       a.btn-link.email-btn(href="./message-santa?code=#{code}", title="Message your santa")
         span.email-icon &#9993
         p Message your santa
-    form(action='/start?code='+code, method='post')
+    form(action='/start?custom=true&code='+code, method='post')
       ul.form-style-1
         li
           label(for='passwd') Event Password
             span.required *
           input.field-long(name='passwd', type='text', id='passwd')
+        li
+          label(for='hardreset') Reset assignments?
+          input(type='checkbox', name='hardreset', id='hardreset')
         li.button
           input(type='submit', value='#{ !isStarted ? "Launch" : "Resend emails" }')

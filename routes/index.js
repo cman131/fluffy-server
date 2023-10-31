@@ -635,14 +635,14 @@ router.post('/start', function(req, res) {
         res.send({ status: 401, body: {} });
         client.close();
       } else {
-        initiateEvent(client, db, events[0], config, code);
+        initiateEvent(client, db, events[0], config, code, req.query.hardreset == 'true');
         res.redirect('/manage?code=' + code);
       }
     });
   });
 });
 
-function initiateEvent(client, db, event, config, code) {
+function initiateEvent(client, db, event, config, code, hardReset = false) {
   var email = require('emailjs/email');
   var server = email.server.connect({
     user: config.email,
@@ -650,7 +650,7 @@ function initiateEvent(client, db, event, config, code) {
     host: 'smtp.gmail.com',
     ssl: true
   });
-  if (!!event.santaAssignments) {
+  if (!!event.santaAssignments && !hardReset) {
     sendEmails(server, config, event.santaAssignments);
   } else {
     db.collection('participants').find({code: code}).toArray(function(err, docs) {
@@ -661,15 +661,16 @@ function initiateEvent(client, db, event, config, code) {
       var participants = shuffle(docs);
       let attempts = 0;
       while (!hasValidPairings(participants) && attempts < 250) {
-        participants = shuffle(participants);
-        attempts += 1;
+	participants = shuffle(participants);
+	attempts += 1;
       }
       if (attempts >= 250) {
-        console.log('Failed to achieve a valid match set after 250 attempts.');
-        client.close();
-        return;
+	console.log('Failed to achieve a valid match set after 250 attempts.');
+	client.close();
+	return;
       }
       console.log('Found a valid result after ' + attempts + ' retries.');
+
       sendEmails(server, config, participants);
 
       db.collection('events').update({ code: event.code }, {
