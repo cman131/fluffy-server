@@ -64,7 +64,8 @@
 </div>
 <script>
   const participantIdEl = document.querySelector('#participant_id');
-  if (!!participantIdEl) {
+  const existingSpouse = participantIdEl ? participantIdEl.getAttribute('spouseId') : undefined;
+  if (!!participantIdEl && !!existingSpouse) {
     lockCode(false);
   }
 </script>
