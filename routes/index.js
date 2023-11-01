@@ -259,6 +259,27 @@ router.post('/message-participant', function(req, res) {
   });
 });
 
+function getParticipants(code, req, res, func) {
+  databaseConnection(req, (err, client, db) => {
+    if (err) {
+      console.log(err);
+      client.close();
+      return;
+    }
+    db.collection('events').find({code: code}).toArray(function(err, events) {
+      if(events.length <= 0) {
+        res.send({status: 404});
+        client.close();
+        return;
+      }
+      db.collection('participants').find({code: code}).toArray((err, docs) => {
+        func(err, docs);
+        client.close();
+      });
+    });
+  });
+};
+
 router.get('/report-shipping', function(req, res, next) {
   var result = {title: 'Secret Santa - Report shipping'};
   result.recipient = req.query.recipient || '';
@@ -269,7 +290,11 @@ router.get('/report-shipping', function(req, res, next) {
     result.failure = true;
     result.message = req.query.message || 'Issue Unknown. Contact admin.';
   }
-  res.render('report-shipping', result);
+
+  getParticipants(result.code, req, res, (err, docs) => {
+    result.participants = docs;
+    res.render('report-shipping', result);
+  })
 });
 
 router.get('/registration', function(req, res, next) {
@@ -397,12 +422,12 @@ router.post('/update-registration', function(req, res) {
            '&interests='+encodeURIComponent(temp.interests || ''));
           return;
         }
-        dbpar.find({email: temp.email, code: temp.code}).toArray(function(err, results) {
+        dbpar.find({_id: ObjectId(req.body.participant_id), code: temp.code}).toArray(function(err, results) {
           if(err) {
             console.log(err);
             client.close();
             res.redirect('/manage?code='+temp.code);
-          } else if(results.length <= 0) {
+          } else if(results.length <= 0 || results[0].email.toUpperCase() !== temp.email.toUpperCase()) {
             console.log('Participant not recognized.');
             client.close();
             res.redirect('/update-registration?failure=true&message=Unrecognized participant email address.'+
@@ -467,23 +492,8 @@ router.get('/event-participants-list/:code', function(req, res) {
     return;
   }
   var code = req.params.code.toUpperCase();
-  databaseConnection(req, (err, client, db) => {
-    if (err) {
-      console.log(err);
-      client.close();
-      return;
-    }
-    db.collection('events').find({code: code}).toArray(function(err, events) {
-      if(events.length <= 0) {
-        res.send({status: 404});
-        client.close();
-        return;
-      }
-      db.collection('participants').find({code: code}).toArray(function(err, docs) {
-        res.send({ status: 200, items: docs });
-        client.close();
-      });
-    });
+  return getParticipants(code, req, res, function(err, docs) {
+    res.send({ status: 200, items: docs });
   });
 });
 
