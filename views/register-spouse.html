@@ -14,37 +14,47 @@
     return label;
   }
 
-  function lockCode() {
+  function lockCode(shouldAlert = true) {
     const codeEl = document.querySelector('#code');
     const lockCodeBtn = document.querySelector('#lock-code-button');
     codeEl.readonly = true;
     codeEl.setAttribute('readonly', true);
     lockCodeBtn.style.display = "none";
 
+    const participantIdEl = document.querySelector('#participant_id');
+    const participantId = participantIdEl ? participantIdEl.value : undefined;
+    const existingSpouse = participantIdEl ? participantIdEl.getAttribute('spouseId') : undefined;
+
     const code = codeEl.value;
     fetch('/event-participants-list/' + code).then(response => {
         if (response.ok) {
             return response.json()
         } else {
-            codeEl.removeAttribute('readonly');
+            if (!participantId) {
+              codeEl.removeAttribute('readonly');
+            }
             lockCodeBtn.style.display = "block";
             alert('Event code does not exist.');
         }
     }).then((participantList => {
-        if (participantList.items.length > 0) {
+        if ((participantList.items.length > 0 && !participantId) || (!!participantId && participantList.items.length > 1)) {
             const spouseSelection = document.querySelector('#spouse-selection');
             const header = document.createElement('label');
             header.appendChild(document.createTextNode("Select spouse:"));
             spouseSelection.appendChild(header);
 
-            spouseSelection.appendChild(getNewSpouseButton('', 'N/A', true));
-            for (let participant of participantList.items) {
-                spouseSelection.appendChild(getNewSpouseButton(participant._id, participant.name));
+            spouseSelection.appendChild(getNewSpouseButton('', 'N/A', !existingSpouse));
+            for (let participant of participantList.items.filter(par => par._id !== participantId)) {
+                spouseSelection.appendChild(getNewSpouseButton(participant._id, participant.name, existingSpouse == participant._id));
             }
         } else {
-            codeEl.removeAttribute('readonly');
+            if (!participantId) {
+              codeEl.removeAttribute('readonly');
+            }
             lockCodeBtn.style.display = "block";
-            alert('No participants yet.');
+            if (shouldAlert) {
+              alert('No participants yet.');
+            }
         }
     }));
   }
@@ -52,3 +62,9 @@
 <button type="button" id="lock-code-button" onClick="lockCode()">Add a spouse restriction</button>
 <div id="spouse-selection">
 </div>
+<script>
+  const participantIdEl = document.querySelector('#participant_id');
+  if (!!participantIdEl) {
+    lockCode(false);
+  }
+</script>

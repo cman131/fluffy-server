@@ -86,6 +86,16 @@ select{
   -moz-box-shadow:none;
   -webkit-box-shadow:none;
 }
+.form-style-1 input[type=submit][disabled], .form-style-1 input[type=button][disabled], .form-style-1 button[disabled]{
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
+}
+.form-style-1 input[type=submit][disabled]:hover, .form-style-1 input[type=button][disabled]:hover, .form-style-1 button[disabled]:hover {
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
+}
 .form-style-1 .required{
   color:red;
 }

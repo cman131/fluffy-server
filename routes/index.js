@@ -286,6 +286,147 @@ router.get('/registration', function(req, res, next) {
   res.render('registration', result);
 });
 
+router.get('/update-registration', function(req, res, next) {
+  var code = req.query.code.toUpperCase();
+  var participantId = req.query.participant_id;
+  databaseConnection(req, (err, client, db) => {
+    if (err) {
+      console.log(err);
+      client.close();
+      return;
+    }
+    db.collection('events').find({code: code}).toArray(function(err, events) {
+      if(events.length <= 0) {
+        res.send({ status: 404 });
+        client.close();
+        return;
+      }
+      else if (!!events[0].santaAssignments) {
+        res.send({ status: 400, message: 'Event has already begun.' });
+      }
+      db.collection('participants').find({code: code}).toArray(function(err, docs) {
+        const participants = docs.filter(par => par._id == participantId);
+        if (participants.length <= 0) {
+          res.send({ status: 404 });
+          client.close();
+          return;
+        }
+        const participant = participants[0];
+        res.render('update-registration', {
+          title: events[0].name + ' - Update Registration',
+          code: code,
+          participant_id: participant._id,
+          name: req.query.name || participant.name,
+          email: req.query.email || '',
+          spouse: req.query.spouse || participant.spouse,
+          address: req.query.address || participant.address,
+          interests: req.query.interests || participant.interests,
+          failure: req.query.failure,
+          message: req.query.message || 'Issue Unknown. Contact admin.'
+        });
+        client.close();
+      });
+    });
+  });
+});
+
+router.post('/update-registration', function(req, res) {
+  // Ensure we have required params
+  if(!req.body.email || !req.body.name || !req.body.address || !req.body.code) {
+    console.log('Not added. Missing parameters.');
+    res.redirect('/update-registration?failure=true&message=Missing required fields.'+
+     '&name='+(req.body.name || '')+
+     '&email='+(req.body.email || '')+
+     '&address='+(req.body.address || '')+
+     '&interests='+(req.body.interests || '')+
+     '&spouse='+(req.body.spouse || '')+
+     '&participant_id='+(req.body.participant_id || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  } else if(!validateEmail(req.body.email.trim())) {
+    console.log('Not added. Invalid email address.');
+    res.redirect('/update-registration?failure=true&message=Invalid email address.'+
+     '&name='+(req.body.name || '')+
+     '&email='+(req.body.email || '')+
+     '&address='+(req.body.address || '')+
+     '&interests='+(req.body.interests || '')+
+     '&spouse='+(req.body.spouse || '')+
+     '&participant_id='+(req.body.participant_id || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  } else if(!validateCode(req.body.code)) {
+    console.log('Not added. Invalid Code.');
+    res.redirect('/update-registration?failure=true&message=Unrecognized event code.'+
+     '&name='+(req.body.name || '')+
+     '&email='+(req.body.email || '')+
+     '&address='+(req.body.address || '')+
+     '&interests='+(req.body.interests || '')+
+     '&spouse='+(req.body.spouse || '')+
+     '&participant_id='+(req.body.participant_id || '')+
+     '&code='+(req.body.code || ''));
+    return;
+  }
+
+  var temp = {
+    name: req.body.name.trim(),
+    email: req.body.email.trim(),
+    address: req.body.address.trim(),
+    code: req.body.code.trim().toUpperCase(),
+    interests: req.body.interests || undefined,
+    spouse: req.body.spouse || undefined
+  };
+
+  databaseConnection(req, (err, client, db) => {
+    if (err) {
+      throw err;
+    } else {
+      console.log("successfully connected to the database");
+      var dbpar = db.collection('participants');
+      var dbeve = db.collection('events');
+      dbeve.count({code: temp.code}, function(err, count) {
+        if(err || count <= 0) {
+          console.log(err);
+          client.close();
+          res.redirect('/update-registration?failure=true&message=Unrecognized event code.'+
+           '&name='+(temp.name || '')+
+           '&email='+(temp.email || '')+
+           '&address='+(temp.address || '')+
+           '&code='+(temp.code || '')+
+           '&spouse='+(req.body.spouse || '')+
+           '&participant_id='+(req.body.participant_id || '')+
+           '&interests='+(temp.interests || ''));
+          return;
+        }
+        dbpar.find({email: temp.email, code: temp.code}).toArray(function(err, results) {
+          if(err) {
+            console.log(err);
+            client.close();
+            res.redirect('/manage?code='+temp.code);
+          } else if(results.length <= 0) {
+            console.log('Participant not recognized.');
+            client.close();
+            res.redirect('/update-registration?failure=true&message=Unrecognized participant email address.'+
+            '&name='+(req.body.name || '')+
+            '&email='+(req.body.email || '')+
+            '&address='+(req.body.address || '')+
+            '&interests='+(req.body.interests || '')+
+            '&spouse='+(req.body.spouse || '')+
+            '&participant_id='+(req.body.participant_id || '')+
+            '&code='+(req.body.code || ''));
+            return;
+          } else {
+            dbpar.update({ email: temp.email, code: temp.code }, {$set: temp}, function(err) {
+              console.log('Successfully added: ' + temp.name);
+              client.close();
+              res.redirect('/manage?isupdated=true&code='+temp.code);
+            });
+          }
+        }); 
+      });
+    }
+  });
+});
+
 router.get('/manage', function(req, res, next) {
   if(!req.query.code || !validateCode(req.query.code)) {
     res.render('choose', {title: 'Choose Event'});

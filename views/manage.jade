@@ -4,7 +4,7 @@ block content
   link(rel='stylesheet', href='/stylesheets/manage.css')
   if isaddition || isshipped || iscreation
     div.banner.success
-      p Successfully #{isaddition ? 'added' : (isshipped ? 'shipped' : 'created')}.
+      p Successfully #{isupdated ? 'updated' : (isaddition ? 'added' : (isshipped ? 'shipped' : 'created'))}.
   div.center-block
     h1.nowrap #{title}
     h3 Code
@@ -23,6 +23,9 @@ block content
               div.badge-icon.in-progress-status(title='Shipped')
             else if isStarted
               div.badge-icon.waiting-status(title='Awaiting shipping report')
+            if !isStarted
+              a.email-btn(href="./update-registration?code=#{code}&participant_id=#{val._id}", title="Update participant")
+                span.email-icon &#9998
             a.email-btn(href="./message-participant?code=#{code}&recipient=#{val.name}", title="Message participant")
               span.email-icon &#9993
             p(title="#{val.giftReceived ? 'Received' : (val.giftShipped ? 'Shipped' : 'Awaiting shipping report')}") #{val.name}
@@ -49,7 +52,7 @@ block content
       a.btn-link.email-btn(href="./message-santa?code=#{code}", title="Message your santa")
         span.email-icon &#9993
         p Message your santa
-    form(action='/start?custom=true&code='+code, method='post')
+    form(action='/start?code='+code, method='post')
       ul.form-style-1
         li
           label(for='passwd') Event Password
