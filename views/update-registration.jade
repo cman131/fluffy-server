@@ -1,0 +1,54 @@
+extends layout
+
+block content
+  script.
+    function checkFormValidity() {
+      for(let inp of document.querySelectorAll('input[required]')) {
+        if (!inp.value) {
+          return false;
+        }
+      }
+      return true;
+    }
+    function toggleButtonIfNeeded() {
+      const btn = document.querySelector('#submit-button');
+      if (checkFormValidity()) {
+        btn.removeAttribute('disabled');
+      } else {
+        btn.setAttribute('disabled', true);
+      }
+    }
+  link(rel='stylesheet', href='/stylesheets/registration.css')
+  if failure
+    div.banner.failure
+      p Could not be updated: #{message}
+  h1= title
+  form(action='/update-registration?participant_id=' + participant_id, method='post')
+    ul.form-style-1
+      li
+        label(for='participant_id') ID
+          span.required *
+        input(type='text', spouseId=spouse, name='participant_id', id='participant_id', required=true, value=participant_id, readonly=true, onChange="toggleButtonIfNeeded()")
+      li
+        label(for='name') Name
+          span.required *
+        input.field-long(name='name', type='text', id='name', value=name, required=true, onChange="toggleButtonIfNeeded()")
+      li
+        label(for='code') Event Code
+          span.required *
+        input.field-long(name='code', type='text', id='code', value=code, required=true, readonly=true, onChange="toggleButtonIfNeeded()")
+      li
+        include register-spouse.html
+      li
+        label(for='email') Email Address
+          span.required *
+        input.field-long(name='email', type='text', id='email', required=true, onChange="toggleButtonIfNeeded()")
+      li
+        label(for='address') Mailing Address
+          span.required *
+        textarea.field-long.field-textarea(name='address', type='textarea', required=true, id='address', placeholder='The address or addresses your secret santa should mail your gift to', onChange="toggleButtonIfNeeded()") #{address}
+      li
+        label(for='interests') Interests
+        textarea.field-long.field-textarea(name='interests', type='textarea', id='interests', placeholder='List out some hobbies and things you are interested in to help your santa :)') #{interests}
+      li.button
+        input(type='submit', value='Register', id='submit-button', disabled)
