@@ -20,7 +20,7 @@ block content
       a.btn-link.subtext.email-btn(href="./message-santa?code=#{code}", title="Message your santa")
         span.email-icon &#9993
         p Message your santa
-    h3 Participants
+    h3='Participants (' + participants.length + ')'
     if participants && participants.length > 0
       ul.participant-list
         each val, index in participants
