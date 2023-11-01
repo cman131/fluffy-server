@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+const ObjectId = require('mongodb').ObjectId;
 
 function databaseConnection(req, dbFunction) {
   var config = require('../config');
@@ -357,7 +358,8 @@ router.get('/update-registration', function(req, res, next) {
 
 router.post('/update-registration', function(req, res) {
   // Ensure we have required params
-  if(!req.body.email || !req.body.name || !req.body.address || !req.body.code) {
+  console.log(req.body);
+  if(!req.body.email || !req.body.name || !req.body.address || !req.body.code || !req.body.participant_id) {
     console.log('Not added. Missing parameters.');
     res.redirect('/update-registration?failure=true&message=Missing required fields.'+
      '&name='+encodeURIComponent(req.body.name || '')+
@@ -500,7 +502,6 @@ router.get('/event-participants-list/:code', function(req, res) {
 router.post('/register', function(req, res) {
   // Ensure we have required params
   if(!req.body.email || !req.body.name || !req.body.address || !req.body.code) {
-    console.log(req.body.address);
     console.log('Not added. Missing parameters.');
     res.redirect('/registration?failure=true&message=Missing required fields.'+
      '&name='+encodeURIComponent(req.body.name || '')+
