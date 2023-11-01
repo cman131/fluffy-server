@@ -34,8 +34,9 @@ block content
             if !isStarted
               a.email-btn(href="./update-registration?code=#{code}&participant_id=#{val._id}", title="Update participant")
                 span.email-icon &#9998
-            a.email-btn(href="./message-participant?code=#{code}&recipient=#{val.name}", title="Message participant")
-              span.email-icon &#9993
+            if isStarted
+              a.email-btn(href="./message-participant?code=#{code}&recipient=#{val.name}", title="Message participant")
+                span.email-icon &#9993
             p(title="#{val.giftReceived ? 'Received' : (val.giftShipped ? 'Shipped' : 'Awaiting shipping report')}") #{val.name}
             if val.giftReceived
               div.badge.flex-right
