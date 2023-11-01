@@ -9,13 +9,20 @@ block content
   form(action='/report-shipping', method='post')
     ul.form-style-1
       li
-        label(for='recipient') Recipient Name
+        label(for='recipient') Select gift recipient
           span.required *
-        input.field-long(name='recipient', type='text', id='recipient', value=recipient)
+        div.subtext(id="recipient-selection")
+          for participant in participants
+            label
+              if participant.name === recipient
+                input(type='radio', name='recipient', value=participant.name, checked=true)
+              else
+                input(type='radio', name='recipient', value=participant.name)
+              span=participant.name
       li
         label(for='code') Event Code
           span.required *
-        input.field-long(name='code', type='text', id='code', value=code)
+        input.field-long(name='code', type='text', id='code', value=code, readonly=true)
       li
         label(for='email') Your Email Address
           span.required *
