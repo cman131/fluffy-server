@@ -37,18 +37,18 @@ router.post('/createevent', function(req, res) {
   if(!req.body.code || !req.body.name || !req.body.passwd) {
     console.log('Not added. Missing parameters.');
     res.redirect('/create?failure=true&message=Missing required fields.'+
-     '&name='+(req.body.name || '')+
-     '&code='+(req.body.code || '')+
-     '&passwd='+(req.body.passwd || '')+
-     '&description='+(req.body.description || ''));
+     '&name='+encodeURIComponent(req.body.name || '')+
+     '&code='+encodeURIComponent(req.body.code || '')+
+     '&passwd='+encodeURIComponent(req.body.passwd || '')+
+     '&description='+encodeURIComponent(req.body.description || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/create?failure=true&message=Invalid event code.'+
-     '&name='+(req.body.name || '')+
-     '&code='+(req.body.code || '')+
-     '&passwd='+(req.body.passwd || '')+
-     '&description='+(req.body.description || ''));
+     '&name='+encodeURIComponent(req.body.name || '')+
+     '&code='+encodeURIComponent(req.body.code || '')+
+     '&passwd='+encodeURIComponent(req.body.passwd || '')+
+     '&description='+encodeURIComponent(req.body.description || ''));
     return;
   }
 
@@ -66,10 +66,10 @@ router.post('/createevent', function(req, res) {
       console.log(err);
       client.close();
       res.redirect('/create?failure=true'+
-       '&name='+(req.body.name || '')+
-       '&code='+(req.body.code || '')+
-       '&passwd='+(req.body.passwd || '')+
-       '&description='+(req.body.description || ''));
+       '&name='+encodeURIComponent(req.body.name || '')+
+       '&code='+encodeURIComponent(req.body.code || '')+
+       '&passwd='+encodeURIComponent(req.body.passwd || '')+
+       '&description='+encodeURIComponent(req.body.description || ''));
     } else {
       console.log("successfully connected to the database");
       var dbeve = db.collection('events');
@@ -78,10 +78,10 @@ router.post('/createevent', function(req, res) {
           console.log(err);
           client.close();
           res.redirect('/create?failure=true&message=Event code already taken.'+
-           '&name='+(req.body.name || '')+
-           '&code='+(req.body.code || '')+
-           '&passwd='+(req.body.passwd || '')+
-           '&description='+(req.body.description || ''));
+           '&name='+encodeURIComponent(req.body.name || '')+
+           '&code='+encodeURIComponent(req.body.code || '')+
+           '&passwd='+encodeURIComponent(req.body.passwd || '')+
+           '&description='+encodeURIComponent(req.body.description || ''));
           return;
         } else {
           var cursor = dbeve.insert(temp, function(err) {
@@ -126,22 +126,22 @@ router.post('/message-santa', function(req, res) {
     console.log('Not added. Missing parameters.');
     res.redirect('/message-santa?failure=true&message=Missing required fields.'+
      '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || ''));
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   } else if(!validateEmail(req.body.email.trim())) {
     console.log('Not added. Invalid email address.');
     res.redirect('/message-santa?failure=true&message=Invalid email address.'+
      '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || ''));
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/message-santa?failure=true&message=Unrecognized event code.'+
      '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || ''));
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   }
 
@@ -165,8 +165,8 @@ router.post('/message-santa', function(req, res) {
           client.close();
           res.redirect('/message-santa?failure=true&message=Unrecognized event code.'+
             '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-            '&email='+(req.body.email || '')+
-            '&code='+(req.body.code || ''));
+            '&email='+encodeURIComponent(req.body.email || '')+
+            '&code='+encodeURIComponent(req.body.code || ''));
           return;
         }
         const event = events[0];
@@ -174,8 +174,8 @@ router.post('/message-santa', function(req, res) {
           client.close();
           res.redirect('/message-santa?failure=true&message=This event has not started yet.'+
             '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-            '&email='+(req.body.email || '')+
-            '&code='+(req.body.code || ''));
+            '&email='+encodeURIComponent(req.body.email || '')+
+            '&code='+encodeURIComponent(req.body.code || ''));
           return;
         }
         const filteredParticipants = event.santaAssignments.filter(participant => participant.email.trim().toUpperCase() === temp.email.trim().toUpperCase());
@@ -183,8 +183,8 @@ router.post('/message-santa', function(req, res) {
           client.close();
           res.redirect('/message-santa?failure=true&message=Email unrecognized.'+
             '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-            '&email='+(req.body.email || '')+
-            '&code='+(req.body.code || ''));
+            '&email='+encodeURIComponent(req.body.email || '')+
+            '&code='+encodeURIComponent(req.body.code || ''));
           return;
         }
         const sendingParticipant = filteredParticipants[0];
@@ -205,16 +205,16 @@ router.post('/message-participant', function(req, res) {
   if(!req.body.recipient || !req.body.messagebody || !req.body.code) {
     console.log('Not added. Missing parameters.');
     res.redirect('/message-participant?failure=true&message=Missing required fields.'+
-     '&recipient='+(req.body.recipient || '')+
+     '&recipient='+encodeURIComponent(req.body.recipient || '')+
      '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-     '&code='+(req.body.code || ''));
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/message-participant?failure=true&message=Unrecognized event code.'+
-     '&recipient='+(req.body.recipient || '')+
+     '&recipient='+encodeURIComponent(req.body.recipient || '')+
      '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-     '&code='+(req.body.code || ''));
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   }
 
@@ -237,18 +237,18 @@ router.post('/message-participant', function(req, res) {
           console.log(err);
           client.close();
           res.redirect('/message-participant?failure=true&message=Unrecognized event code.'+
-          '&recipient='+(req.body.recipient || '')+
+          '&recipient='+encodeURIComponent(req.body.recipient || '')+
           '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-          '&code='+(req.body.code || ''));
+          '&code='+encodeURIComponent(req.body.code || ''));
           return;
         }
         const filteredParticipants = participants.filter(participant => participant.name.trim().toUpperCase() === temp.recipient.trim().toUpperCase());
         if (filteredParticipants.length <= 0) {
           client.close();
           res.redirect('/message-participant?failure=true&message=Recipient unrecognized.'+
-            '&recipient='+(req.body.recipient || '')+
+            '&recipient='+encodeURIComponent(req.body.recipient || '')+
             '&messagebody='+encodeURIComponent(req.body.messagebody || '')+
-            '&code='+(req.body.code || ''));
+            '&code='+encodeURIComponent(req.body.code || ''));
           return;
         }
         sendCustomEmail(config, filteredParticipants[0], temp.messagebody);
@@ -335,35 +335,35 @@ router.post('/update-registration', function(req, res) {
   if(!req.body.email || !req.body.name || !req.body.address || !req.body.code) {
     console.log('Not added. Missing parameters.');
     res.redirect('/update-registration?failure=true&message=Missing required fields.'+
-     '&name='+(req.body.name || '')+
-     '&email='+(req.body.email || '')+
-     '&address='+(req.body.address || '')+
-     '&interests='+(req.body.interests || '')+
-     '&spouse='+(req.body.spouse || '')+
-     '&participant_id='+(req.body.participant_id || '')+
-     '&code='+(req.body.code || ''));
+     '&name='+encodeURIComponent(req.body.name || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&address='+encodeURIComponent(req.body.address || '')+
+     '&interests='+encodeURIComponent(req.body.interests || '')+
+     '&spouse='+encodeURIComponent(req.body.spouse || '')+
+     '&participant_id='+encodeURIComponent(req.body.participant_id || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   } else if(!validateEmail(req.body.email.trim())) {
     console.log('Not added. Invalid email address.');
     res.redirect('/update-registration?failure=true&message=Invalid email address.'+
-     '&name='+(req.body.name || '')+
-     '&email='+(req.body.email || '')+
-     '&address='+(req.body.address || '')+
-     '&interests='+(req.body.interests || '')+
-     '&spouse='+(req.body.spouse || '')+
-     '&participant_id='+(req.body.participant_id || '')+
-     '&code='+(req.body.code || ''));
+     '&name='+encodeURIComponent(req.body.name || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&address='+encodeURIComponent(req.body.address || '')+
+     '&interests='+encodeURIComponent(req.body.interests || '')+
+     '&spouse='+encodeURIComponent(req.body.spouse || '')+
+     '&participant_id='+encodeURIComponent(req.body.participant_id || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/update-registration?failure=true&message=Unrecognized event code.'+
-     '&name='+(req.body.name || '')+
-     '&email='+(req.body.email || '')+
-     '&address='+(req.body.address || '')+
-     '&interests='+(req.body.interests || '')+
-     '&spouse='+(req.body.spouse || '')+
-     '&participant_id='+(req.body.participant_id || '')+
-     '&code='+(req.body.code || ''));
+     '&name='+encodeURIComponent(req.body.name || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&address='+encodeURIComponent(req.body.address || '')+
+     '&interests='+encodeURIComponent(req.body.interests || '')+
+     '&spouse='+encodeURIComponent(req.body.spouse || '')+
+     '&participant_id='+encodeURIComponent(req.body.participant_id || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   }
 
@@ -388,13 +388,13 @@ router.post('/update-registration', function(req, res) {
           console.log(err);
           client.close();
           res.redirect('/update-registration?failure=true&message=Unrecognized event code.'+
-           '&name='+(temp.name || '')+
-           '&email='+(temp.email || '')+
-           '&address='+(temp.address || '')+
-           '&code='+(temp.code || '')+
-           '&spouse='+(req.body.spouse || '')+
-           '&participant_id='+(req.body.participant_id || '')+
-           '&interests='+(temp.interests || ''));
+           '&name='+encodeURIComponent(temp.name || '')+
+           '&email='+encodeURIComponent(temp.email || '')+
+           '&address='+encodeURIComponent(temp.address || '')+
+           '&code='+encodeURIComponent(temp.code || '')+
+           '&spouse='+encodeURIComponent(req.body.spouse || '')+
+           '&participant_id='+encodeURIComponent(req.body.participant_id || '')+
+           '&interests='+encodeURIComponent(temp.interests || ''));
           return;
         }
         dbpar.find({email: temp.email, code: temp.code}).toArray(function(err, results) {
@@ -406,13 +406,13 @@ router.post('/update-registration', function(req, res) {
             console.log('Participant not recognized.');
             client.close();
             res.redirect('/update-registration?failure=true&message=Unrecognized participant email address.'+
-            '&name='+(req.body.name || '')+
-            '&email='+(req.body.email || '')+
-            '&address='+(req.body.address || '')+
-            '&interests='+(req.body.interests || '')+
-            '&spouse='+(req.body.spouse || '')+
-            '&participant_id='+(req.body.participant_id || '')+
-            '&code='+(req.body.code || ''));
+            '&name='+encodeURIComponent(req.body.name || '')+
+            '&email='+encodeURIComponent(req.body.email || '')+
+            '&address='+encodeURIComponent(req.body.address || '')+
+            '&interests='+encodeURIComponent(req.body.interests || '')+
+            '&spouse='+encodeURIComponent(req.body.spouse || '')+
+            '&participant_id='+encodeURIComponent(req.body.participant_id || '')+
+            '&code='+encodeURIComponent(req.body.code || ''));
             return;
           } else {
             dbpar.update({ email: temp.email, code: temp.code }, {$set: temp}, function(err) {
@@ -436,7 +436,7 @@ router.get('/manage', function(req, res, next) {
   databaseConnection(req, (err, client, db) => {
     if (err) {
       console.log(err);
-      client.close();
+      client?.close();
       return;
     }
     db.collection('events').find({code: code}).toArray(function(err, events) {
@@ -493,28 +493,28 @@ router.post('/register', function(req, res) {
     console.log(req.body.address);
     console.log('Not added. Missing parameters.');
     res.redirect('/registration?failure=true&message=Missing required fields.'+
-     '&name='+(req.body.name || '')+
-     '&email='+(req.body.email || '')+
-     '&address='+(req.body.address || '')+
-     '&interests='+(req.body.interests || ''));
+     '&name='+encodeURIComponent(req.body.name || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&address='+encodeURIComponent(req.body.address || '')+
+     '&interests='+encodeURIComponent(req.body.interests || ''));
     return;
   } else if(!validateEmail(req.body.email.trim())) {
     console.log('Not added. Invalid email address.');
     res.redirect('/registration?failure=true&message=Invalid email address.'+
-     '&name='+(req.body.name || '')+
-     '&email='+(req.body.email || '')+
-     '&address='+(req.body.address || '')+
-     '&code='+(req.body.code || '')+
-     '&interests='+(req.body.interests || ''));
+     '&name='+encodeURIComponent(req.body.name || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&address='+encodeURIComponent(req.body.address || '')+
+     '&code='+encodeURIComponent(req.body.code || '')+
+     '&interests='+encodeURIComponent(req.body.interests || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/registration?failure=true&message=Unrecognized event code.'+
-     '&name='+(req.body.name || '')+
-     '&email='+(req.body.email || '')+
-     '&address='+(req.body.address || '')+
-     '&code='+(req.body.code || '')+
-     '&interests='+(req.body.interests || ''));
+     '&name='+encodeURIComponent(req.body.name || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&address='+encodeURIComponent(req.body.address || '')+
+     '&code='+encodeURIComponent(req.body.code || '')+
+     '&interests='+encodeURIComponent(req.body.interests || ''));
     return;
   }
 
@@ -541,11 +541,11 @@ router.post('/register', function(req, res) {
           console.log(err);
           client.close();
           res.redirect('/registration?failure=true&message=Unrecognized event code.'+
-           '&name='+(temp.name || '')+
-           '&email='+(temp.email || '')+
-           '&address='+(temp.address || '')+
-           '&code='+(temp.code || '')+
-           '&interests='+(temp.interests || ''));
+           '&name='+encodeURIComponent(temp.name || '')+
+           '&email='+encodeURIComponent(temp.email || '')+
+           '&address='+encodeURIComponent(temp.address || '')+
+           '&code='+encodeURIComponent(temp.code || '')+
+           '&interests='+encodeURIComponent(temp.interests || ''));
           return;
         }
         dbpar.count({email: temp.email, code: temp.code}, function(err, count) {
@@ -562,8 +562,12 @@ router.post('/register', function(req, res) {
           } else {
             console.log('Not added. Already in db.');
             client.close();
-            res.redirect('/registration?failure=true&message=Already registered.&name='+temp.name+
-             '&email='+temp.email+'&address='+temp.address+(temp.interests ? '&interests='+temp.interests : ''));
+            res.redirect('/registration?failure=true&message=Already registered.'+
+             '&name='+encodeURIComponent(temp.name || '')+
+             '&email='+encodeURIComponent(temp.email || '')+
+             '&address='+encodeURIComponent(temp.address || '')+
+             '&code='+encodeURIComponent(temp.code || '')+
+             '&interests='+encodeURIComponent(temp.interests || ''));
             return;
           }
         }); 
@@ -578,26 +582,26 @@ router.post('/report-shipping', function(req, res) {
   if(!req.body.email || !req.body.recipient || !req.body.code) {
     console.log('Not added. Missing parameters.');
     res.redirect('/report-shipping?failure=true&message=Missing required fields.'+
-     '&recipient='+(req.body.recipient || '')+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || '')+
-     '&deliveryestimate='+(req.body.deliveryestimate || ''));
+     '&recipient='+encodeURIComponent(req.body.recipient || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || '')+
+     '&deliveryestimate='+encodeURIComponent(req.body.deliveryestimate || ''));
     return;
   } else if(!validateEmail(req.body.email.trim())) {
     console.log('Not added. Invalid email address.');
     res.redirect('/report-shipping?failure=true&message=Invalid email address.'+
-     '&recipient='+(req.body.recipient || '')+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || '')+
-     '&deliveryestimate='+(req.body.deliveryestimate || ''));
+     '&recipient='+encodeURIComponent(req.body.recipient || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || '')+
+     '&deliveryestimate='+encodeURIComponent(req.body.deliveryestimate || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/report-shipping?failure=true&message=Unrecognized event code.'+
-     '&recipient='+(req.body.recipient || '')+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || '')+
-     '&deliveryestimate='+(req.body.deliveryestimate || ''));
+     '&recipient='+encodeURIComponent(req.body.recipient || '')+
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || '')+
+     '&deliveryestimate='+encodeURIComponent(req.body.deliveryestimate || ''));
     return;
   }
 
@@ -622,30 +626,30 @@ router.post('/report-shipping', function(req, res) {
           console.log(err);
           client.close();
           res.redirect('/report-shipping?failure=true&message=Unrecognized event code.'+
-           '&recipient='+(temp.recipient || '')+
-           '&email='+(temp.email || '')+
-           '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
-           '&code='+(temp.code || ''));
+           '&recipient='+encodeURIComponent(temp.recipient || '')+
+           '&email='+encodeURIComponent(temp.email || '')+
+           '&deliveryestimate='+encodeURIComponent(temp.estimatedDeliveryDate || '')+
+           '&code='+encodeURIComponent(temp.code || ''));
           return;
         }
         const event = events[0];
         if (!event.santaAssignments) {
           client.close();
           res.redirect('/report-shipping?failure=true&message=This event has not started yet.'+
-           '&recipient='+(temp.recipient || '')+
-           '&email='+(temp.email || '')+
-           '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
-           '&code='+(temp.code || ''));
+           '&recipient='+encodeURIComponent(temp.recipient || '')+
+           '&email='+encodeURIComponent(temp.email || '')+
+           '&deliveryestimate='+encodeURIComponent(temp.estimatedDeliveryDate || '')+
+           '&code='+encodeURIComponent(temp.code || ''));
           return;
         }
         const filteredParticipants = event.santaAssignments.filter(participant => participant.email.trim().toUpperCase() === temp.email.trim().toUpperCase());
         if (filteredParticipants.length <= 0) {
           client.close();
           res.redirect('/report-shipping?failure=true&message=Email unrecognized.'+
-           '&recipient='+(temp.recipient || '')+
-           '&email='+(temp.email || '')+
-           '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
-           '&code='+(temp.code || ''));
+           '&recipient='+encodeURIComponent(temp.recipient || '')+
+           '&email='+encodeURIComponent(temp.email || '')+
+           '&deliveryestimate='+encodeURIComponent(temp.estimatedDeliveryDate || '')+
+           '&code='+encodeURIComponent(temp.code || ''));
           return;
         }
         const sendingParticipant = filteredParticipants[0];
@@ -654,10 +658,10 @@ router.post('/report-shipping', function(req, res) {
         const receivingParticipant = event.santaAssignments[recipientIndex];
         if (receivingParticipant.name.trim().toUpperCase() !== temp.recipient.trim().toUpperCase()) {
           res.redirect('/report-shipping?failure=true&message=You are not '+temp.recipient.trim()+'\'s santa.'+
-           '&recipient='+(temp.recipient || '')+
-           '&email='+(temp.email || '')+
-           '&deliveryestimate='+(temp.estimatedDeliveryDate || '')+
-           '&code='+(temp.code || ''));
+           '&recipient='+encodeURIComponent(temp.recipient || '')+
+           '&email='+encodeURIComponent(temp.email || '')+
+           '&deliveryestimate='+encodeURIComponent(temp.estimatedDeliveryDate || '')+
+           '&code='+encodeURIComponent(temp.code || ''));
           return;
         }
 
@@ -697,20 +701,20 @@ router.post('/report-received', function(req, res) {
   if(!req.body.email || !req.body.code) {
     console.log('Not added. Missing parameters.');
     res.redirect('/report-received?failure=true&message=Missing required fields.'+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || ''));
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   } else if(!validateEmail(req.body.email.trim())) {
     console.log('Not added. Invalid email address.');
     res.redirect('/report-received?failure=true&message=Invalid email address.'+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || ''));
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   } else if(!validateCode(req.body.code)) {
     console.log('Not added. Invalid Code.');
     res.redirect('/report-received?failure=true&message=Unrecognized event code.'+
-     '&email='+(req.body.email || '')+
-     '&code='+(req.body.code || ''));
+     '&email='+encodeURIComponent(req.body.email || '')+
+     '&code='+encodeURIComponent(req.body.code || ''));
     return;
   }
 
@@ -731,8 +735,8 @@ router.post('/report-received', function(req, res) {
           console.log(err);
           client.close();
           res.redirect('/report-received?failure=true&message=Unrecognized event code.'+
-           '&email='+(temp.email || '')+
-           '&code='+(temp.code || ''));
+           '&email='+encodeURIComponent(temp.email || '')+
+           '&code='+encodeURIComponent(temp.code || ''));
           return;
         }
         dbpar.find({email: temp.email, code: temp.code}).toArray(function(err, results) {
