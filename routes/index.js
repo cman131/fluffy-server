@@ -814,18 +814,20 @@ function initiateEvent(client, db, event, config, code, hardReset = false) {
         console.log(err);
         return;
       }
-      var participants = shuffle(docs);
+      var participants = customize(shuffle(docs));
       let attempts = 0;
-      while (!hasValidPairings(participants) && attempts < 250) {
-	participants = shuffle(participants);
-	attempts += 1;
+      const attemptLimit = 400;
+      while (!hasValidPairings(participants) && attempts < attemptLimit) {
+        participants = customize(shuffle(participants));
+        attempts += 1;
       }
-      if (attempts >= 250) {
-	console.log('Failed to achieve a valid match set after 250 attempts.');
-	client.close();
-	return;
+      if (attempts >= attemptLimit) {
+        console.log(`Failed to achieve a valid match set after ${attemptLimit} attempts.`);
+        client.close();
+        return;
       }
       console.log('Found a valid result after ' + attempts + ' retries.');
+      console.log(participants.map(part => part.name));
 
       sendEmails(server, config, participants);
 
@@ -839,6 +841,11 @@ function initiateEvent(client, db, event, config, code, hardReset = false) {
       });
     });
   }
+}
+
+// In case we need weird special handling again. Used to be for spouses
+function customize(participants) {
+  return participants;
 }
 
 function hasValidPairings(participants) {
