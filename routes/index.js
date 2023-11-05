@@ -105,7 +105,11 @@ router.get('/message-participant', function(req, res, next) {
     result.failure = true;
     result.message = req.query.message || 'Issue Unknown. Contact admin.';
   }
-  res.render('message-participant', result);
+
+  getParticipants(result.code, req, res, (err, docs) => {
+    result.participants = docs;
+    res.render('message-participant', result);
+  })
 });
 
 router.get('/message-santa', function(req, res, next) {
@@ -147,7 +151,6 @@ router.post('/message-santa', function(req, res) {
   }
 
   var config = require('../config');
-  var MongoClient = req.db;
   var temp = {
     messagebody: req.body.messagebody,
     email: req.body.email.trim(),
@@ -193,7 +196,7 @@ router.post('/message-santa', function(req, res) {
         recipientIndex = recipientIndex <= -1 ? event.santaAssignments.length - 1 : recipientIndex;
         const receivingParticipant = event.santaAssignments[recipientIndex];
 
-        sendCustomEmail(config, receivingParticipant, temp.messagebody);
+        sendCustomEmail(config, receivingParticipant, temp.messagebody, sendingParticipant.name);
         client.close();
         res.redirect('/manage?successfuloperation=true&code='+temp.code);
       });
@@ -220,7 +223,6 @@ router.post('/message-participant', function(req, res) {
   }
 
   var config = require('../config');
-  var MongoClient = req.db;
   var temp = {
     recipient: req.body.recipient.trim(),
     messagebody: req.body.messagebody,
@@ -863,7 +865,7 @@ function hasValidPairings(participants) {
   return true;
 }
 
-function sendCustomEmail(config, recipient, message) {
+function sendCustomEmail(config, recipient, message, recipientName = undefined) {
   var email = require('emailjs/email');
   var server = email.server.connect({
     user: config.email,
@@ -877,7 +879,7 @@ function sendCustomEmail(config, recipient, message) {
       text: message,
       from: 'Fluffy-Server <'+config.email+'>',
       to: recipient.name+' <'+recipient.email+'>',
-      subject: 'Secret Santa - Anonymous message'
+      subject: 'Secret Santa - Anonymous message' + (!!recipientName ? ` from your assigned recipient, ${recipientName}` : '')
     },
     (err, message) => console.log(err || message)
   )
