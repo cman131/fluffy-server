@@ -21,6 +21,7 @@ h3 {
     color: #212327;
     background-color: #ffffff;
     border-color: #cdcfd2;
+    min-width: 122px;
 }
 .btn-link:hover{
     color: #212327;
@@ -75,8 +76,8 @@ p {
 .badge-icon {
   border: 1px solid;
   border-radius: 20px;
-  width: 5px;
-  height: 5px;
+  width: 10px;
+  height: 10px;
   margin-right: 5px;
 }
 .badge p {
@@ -164,7 +165,9 @@ input[type=submit]:hover, input[type=button]:hover{
 .email-btn {
   display: flex;
   max-width: 150px;
+  align-items: center;
 }
 .email-icon {
   margin-right: 5px;
+  font-size: 20px;
 }

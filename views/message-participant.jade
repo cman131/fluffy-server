@@ -9,16 +9,23 @@ block content
   form(action='/message-participant', method='post')
     ul.form-style-1
       li
-        label(for='recipient') Recipient Name
+        label(for='recipient') Who are you messaging?
           span.required *
-        input.field-long(name='recipient', type='text', id='recipient', value=recipient)
+        div.subtext(id="recipient-selection")
+          for participant in participants
+            label
+              if participant.name === recipient
+                input(type='radio', name='recipient', value=participant.name, checked=true)
+              else
+                input(type='radio', name='recipient', value=participant.name)
+              span=participant.name
       li
         label(for='code') Event Code
           span.required *
-        input.field-long(name='code', type='text', id='code', value=code)
+        input.field-long(name='code', type='text', id='code', value=code, readonly=true)
       li
         label(for='messagebody') Message body
           span.required *
-        textarea.field-long.field-textarea(name='messagebody', type='textarea', id='messagebody', placeholder='The message you want to send') #{messagebody}
+        textarea.field-long.field-textarea(name='messagebody', type='textarea', id='messagebody', placeholder='The message you want to send. Recommended to sign as santa.') #{messagebody}
       li.button
         input(type='submit', value='Send message')
