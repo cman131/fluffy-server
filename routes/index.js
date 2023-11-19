@@ -196,7 +196,7 @@ router.post('/message-santa', function(req, res) {
         recipientIndex = recipientIndex <= -1 ? event.santaAssignments.length - 1 : recipientIndex;
         const receivingParticipant = event.santaAssignments[recipientIndex];
 
-        sendCustomEmail(config, receivingParticipant, temp.messagebody, sendingParticipant.name);
+        sendCustomEmail(config, temp.code, receivingParticipant, temp.messagebody, sendingParticipant.name);
         client.close();
         res.redirect('/manage?successfuloperation=true&code='+temp.code);
       });
@@ -254,7 +254,7 @@ router.post('/message-participant', function(req, res) {
             '&code='+encodeURIComponent(req.body.code || ''));
           return;
         }
-        sendCustomEmail(config, filteredParticipants[0], temp.messagebody);
+        sendCustomEmail(config, temp.code, filteredParticipants[0], temp.messagebody);
         client.close();
         res.redirect('/manage?successfuloperation=true&code='+temp.code);
       });
@@ -691,7 +691,7 @@ router.post('/report-shipping', function(req, res) {
 
         additionalInfo = temp.estimatedDeliveryDate ? `\nThe estimated delivery info is: ${temp.estimatedDeliveryDate}.` : '';
         var config = require('../config');
-        sendCustomEmail(config, receivingParticipant, 'Your secret santa package has been shipped! Keep an eye out for it. ' + additionalInfo);
+        sendCustomEmail(config, temp.code, receivingParticipant, 'Your secret santa package has been shipped! Keep an eye out for it. ' + additionalInfo);
       });
     }
   });
@@ -865,7 +865,7 @@ function hasValidPairings(participants) {
   return true;
 }
 
-function sendCustomEmail(config, recipient, message, recipientName = undefined) {
+function sendCustomEmail(config, eventCode, recipient, message, recipientName = undefined) {
   var email = require('emailjs/email');
   var server = email.server.connect({
     user: config.email,
@@ -874,12 +874,13 @@ function sendCustomEmail(config, recipient, message, recipientName = undefined) 
     ssl: true
   });
 
+  const messageFooter = `\n\n\nNOTE: Do not reply to this email. Instead use the site to send a message back: ${config.siteBaseUrl}/manage?code=${eventCode}`;
   server.send(
     {
-      text: message,
+      text: message + messageFooter,
       from: 'Fluffy-Server <'+config.email+'>',
       to: recipient.name+' <'+recipient.email+'>',
-      subject: 'Secret Santa - Anonymous message' + (!!recipientName ? ` from your assigned recipient, ${recipientName}` : '')
+      subject: '[DoNotReply] Secret Santa - Anonymous message' + (!!recipientName ? ` from your assigned recipient, ${recipientName}` : '')
     },
     (err, message) => console.log(err || message)
   )
@@ -899,7 +900,7 @@ function sendEmails(server, config, participants) {
         "\n\n Thank you,\n - Fluffy-Server",
       from: 'Fluffy-Server <'+config.email+'>',
       to: santa.name+' <'+santa.email+'>',
-      subject: 'Secret Santa'
+      subject: '[DoNotReply] Secret Santa'
     }, emailSent);
   }
 }
