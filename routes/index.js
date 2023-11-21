@@ -689,9 +689,11 @@ router.post('/report-shipping', function(req, res) {
           res.redirect('/manage?isshipped=true&code='+temp.code);
         });
 
-        additionalInfo = temp.estimatedDeliveryDate ? `\nThe estimated delivery info is: ${temp.estimatedDeliveryDate}.` : '';
-        var config = require('../config');
-        sendCustomEmail(config, temp.code, receivingParticipant, 'Your secret santa package has been shipped! Keep an eye out for it. ' + additionalInfo);
+        const additionalInfo = temp.estimatedDeliveryDate ? `\nThe estimated delivery info is: ${temp.estimatedDeliveryDate}.` : '';
+        const config = require('../config');
+        const message = `Your secret santa package has been shipped! Keep an eye out for it. ${additionalInfo}`;
+        const footer = `And make sure you report it as received on the site once you have it: ${config.siteBaseUrl}/manage?code=${temp.code}`;
+        sendCustomEmail(config, temp.code, receivingParticipant, message, undefined, footer);
       });
     }
   });
@@ -865,7 +867,7 @@ function hasValidPairings(participants) {
   return true;
 }
 
-function sendCustomEmail(config, eventCode, recipient, message, recipientName = undefined) {
+function sendCustomEmail(config, eventCode, recipient, message, recipientName = undefined, additionalNote = undefined) {
   var email = require('emailjs/email');
   var server = email.server.connect({
     user: config.email,
@@ -874,7 +876,8 @@ function sendCustomEmail(config, eventCode, recipient, message, recipientName = 
     ssl: true
   });
 
-  const messageFooter = `\n\n\nNOTE: Do not reply to this email. Instead use the site to send a message back: ${config.siteBaseUrl}/manage?code=${eventCode}`;
+  const messageFooter = !!additionalNote ? `\n\n\nNOTE: ${additionalNote}` : `\n\n\nNOTE: Do not reply to this email. Instead use the site to send a message back: ${config.siteBaseUrl}/manage?code=${eventCode}`;
+  console.log(message + messageFooter);
   server.send(
     {
       text: message + messageFooter,
