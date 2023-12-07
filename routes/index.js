@@ -444,7 +444,7 @@ router.post('/update-registration', function(req, res) {
             '&code='+encodeURIComponent(req.body.code || ''));
             return;
           } else {
-            dbpar.update({ email: temp.email, code: temp.code }, {$set: temp}, function(err) {
+            dbpar.update({ _id: ObjectId(results[0]._id), code: temp.code }, {$set: temp}, function(err) {
               console.log('Successfully added: ' + temp.name);
               client.close();
               res.redirect('/manage?isupdated=true&code='+temp.code);
@@ -561,12 +561,16 @@ router.post('/register', function(req, res) {
            '&interests='+encodeURIComponent(temp.interests || ''));
           return;
         }
-        dbpar.count({email: temp.email, code: temp.code}, function(err, count) {
+        dbpar.find({code: temp.code}).toArray(function(err, results) {
           if(err) {
             console.log(err);
             client.close();
             res.redirect('/manage?isaddition=true&code='+temp.code);
-          } else if(count <= 0) {
+            return;
+          }
+          
+          const person = results.find(p => p.email.toUpperCase() == temp.email.toUpperCase());
+          if(!person) {
             dbpar.insert(temp, function(err) {
               console.log('Successfully added: ' + temp.name);
               client.close();
@@ -683,7 +687,7 @@ router.post('/report-shipping', function(req, res) {
           estimatedDeliveryDate: temp.estimatedDeliveryDate
         };
         console.log(updateBody)
-        dbpar.update({email: receivingParticipant.email, code: temp.code}, { $set: updateBody }, function(err) {
+        dbpar.update({_id: ObjectId(receivingParticipant._id), code: temp.code}, { $set: updateBody }, function(err) {
           console.log('Successfully shipped: ' + temp.recipient);
           client.close();
           res.redirect('/manage?isshipped=true&code='+temp.code);
@@ -754,23 +758,27 @@ router.post('/report-received', function(req, res) {
            '&code='+encodeURIComponent(temp.code || ''));
           return;
         }
-        dbpar.find({email: temp.email, code: temp.code}).toArray(function(err, results) {
+        dbpar.find({code: temp.code}).toArray(function(err, results) {
           if(err) {
             console.log(err);
             client.close();
             res.redirect('/manage?isaddition=true&code='+temp.code);
-          } else if (results.length === 0) {
+            return;
+          }
+
+          var person = results.find(p => p.email.toUpperCase() == temp.email.toUpperCase());
+          if (!person) {
             console.log('Not added. Unrecognized.');
             client.close();
             res.redirect('/report-received?failure=true&message=Email unrecognized.&code='+temp.code+'&email='+temp.email);
             return;
-          } else if (!results[0].giftShipped) {
+          } else if (!person.giftShipped) {
             console.log('Not added. Not yet shipped.');
             client.close();
             res.redirect('/report-received?failure=true&message=Your gift has not yet shipped.&code='+temp.code+'&email='+temp.email);
             return;
           } else {
-            dbpar.update({ email: temp.email, giftShipped: true, code: temp.code }, { $set: { giftReceived: true } }, function(err) {
+            dbpar.update({ _id: ObjectId(person._id), giftShipped: true, code: temp.code }, { $set: { giftReceived: true } }, function(err) {
               console.log('Successfully received gift: ' + temp.email);
               client.close();
               res.redirect('/manage?isreceived=true&code='+temp.code);
